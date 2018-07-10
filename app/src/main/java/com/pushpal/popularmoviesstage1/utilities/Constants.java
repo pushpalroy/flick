@@ -2,7 +2,7 @@ package com.pushpal.popularmoviesstage1.utilities;
 
 public class Constants {
     // Constants of The Movie Database API
-    public static final String API_KEY = "4b392287007171d869f11bdb94e174bd";
+    public static final String API_KEY = "";
     public static final String BASE_URL = "https://api.themoviedb.org/3/";
     public static final String POPULAR_MOVIES_URL = "movie/popular";
     public static final String TOP_RATED_MOVIES_URL = "movie/top_rated";
