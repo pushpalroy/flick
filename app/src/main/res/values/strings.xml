@@ -1,0 +1,13 @@
+<resources>
+    <string name="app_name">Flick</string>
+    <string name="item_description">Movie Poster</string>
+    <string name="loader_message">Loading Movies</string>
+
+    <string name="action_most_popular">Most Popular</string>
+    <string name="action_top_rated">Top Rated</string>
+    <string name="action_favourite">Favourites</string>
+    <string name="sort">Sort</string>
+    <string name="category">Category</string>
+    <string name="votes">votes</string>
+    <string name="overview">Overview</string>
+</resources>

@@ -1,0 +1,23 @@
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    android:id="@+id/loader_container"
+    android:layout_width="match_parent"
+    android:layout_height="wrap_content"
+    android:layout_gravity="center"
+    android:orientation="vertical"
+    android:visibility="invisible">
+
+    <com.victor.loading.newton.NewtonCradleLoading
+        android:id="@+id/loader"
+        android:layout_width="wrap_content"
+        android:layout_height="150dp"
+        android:layout_gravity="center_horizontal" />
+
+    <TextView
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:gravity="center_horizontal"
+        android:padding="5dp"
+        android:text="@string/loader_message"
+        android:textAppearance="?android:attr/textAppearanceLarge"
+        android:textColor="@color/colorLightGreyText" />
+</LinearLayout>

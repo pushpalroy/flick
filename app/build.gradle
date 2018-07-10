@@ -1,0 +1,83 @@
+apply plugin: 'com.android.application'
+
+android {
+    compileSdkVersion 27
+    defaultConfig {
+        applicationId "com.pushpal.popularmoviesstage1"
+        minSdkVersion 21
+        targetSdkVersion 27
+        versionCode 1
+        versionName "1.0"
+        testInstrumentationRunner "android.support.test.runner.AndroidJUnitRunner"
+    }
+    buildTypes {
+        release {
+            minifyEnabled false
+            proguardFiles getDefaultProguardFile('proguard-android.txt'), 'proguard-rules.pro'
+        }
+    }
+}
+
+ext {
+    supportLibVersion = '27.1.1'
+    retrofitVersion = '2.4.0'
+    butterknifeVersion = '8.8.1'
+    roomVersion = '1.1.1'
+    liveDataVer = '1.1.1'
+}
+
+dependencies {
+    implementation fileTree(dir: 'libs', include: ['*.jar'])
+
+    // Constraint Layout
+    implementation 'com.android.support.constraint:constraint-layout:1.1.2'
+
+    // Picasso
+    implementation 'com.squareup.picasso:picasso:2.5.2'
+
+    // ButterKnife
+    implementation "com.jakewharton:butterknife:${butterknifeVersion}"
+    annotationProcessor "com.jakewharton:butterknife-compiler:${butterknifeVersion}"
+
+    // Retrofit, GSON
+    implementation 'com.google.code.gson:gson:2.8.2'
+    implementation "com.squareup.retrofit2:retrofit:${retrofitVersion}"
+    implementation "com.squareup.retrofit2:converter-gson:${retrofitVersion}"
+
+    // Support Libraries
+    implementation "com.android.support:appcompat-v7:${supportLibVersion}"
+    implementation "com.android.support:recyclerview-v7:${supportLibVersion}"
+    implementation "com.android.support:cardview-v7:${supportLibVersion}"
+    implementation "com.android.support:support-v4:${supportLibVersion}"
+    implementation "com.android.support:percent:${supportLibVersion}"
+    implementation "com.android.support:design:${supportLibVersion}"
+    implementation "com.android.support:palette-v7:${supportLibVersion}"
+
+    // Room - Database
+    implementation "android.arch.persistence.room:runtime:${roomVersion}"
+    annotationProcessor "android.arch.persistence.room:compiler:${roomVersion}"
+
+    // Live Data
+    implementation "android.arch.lifecycle:extensions:${liveDataVer}"
+    annotationProcessor "android.arch.lifecycle:compiler:${liveDataVer}"
+
+    // Loader
+    implementation 'com.victor:lib:1.0.4'
+
+    // Tap Target
+    implementation 'uk.co.samuelwall:material-tap-target-prompt:2.9.0'
+
+    // FAB Transformation
+    implementation 'konifar:fab-transformation:1.0.0'
+
+    // Shine Button
+    implementation 'com.sackcentury:shinebutton:0.2.0'
+
+    // Calligraphy
+    implementation 'uk.co.chrisjenx:calligraphy:2.2.0'
+
+    // Testing Libraries
+    testImplementation 'junit:junit:4.12'
+    androidTestImplementation 'com.android.support.test:runner:1.0.2'
+    androidTestImplementation 'com.android.support.test.espresso:espresso-core:3.0.2'
+}
