@@ -1,7 +1,7 @@
 package com.pushpal.popularmoviesstage1.activity;
 
-import android.arch.lifecycle.LiveData;
 import android.arch.lifecycle.Observer;
+import android.arch.lifecycle.ViewModelProviders;
 import android.content.Context;
 import android.content.Intent;
 import android.content.IntentFilter;
@@ -34,6 +34,7 @@ import com.konifar.fab_transformation.FabTransformation;
 import com.pushpal.popularmoviesstage1.R;
 import com.pushpal.popularmoviesstage1.adapter.MovieAdapter;
 import com.pushpal.popularmoviesstage1.adapter.MovieClickListener;
+import com.pushpal.popularmoviesstage1.database.MainViewModel;
 import com.pushpal.popularmoviesstage1.database.MovieDatabase;
 import com.pushpal.popularmoviesstage1.model.Movie;
 import com.pushpal.popularmoviesstage1.model.MovieLang;
@@ -59,7 +60,9 @@ import retrofit2.Response;
 import uk.co.chrisjenx.calligraphy.CalligraphyContextWrapper;
 import uk.co.samuelwall.materialtaptargetprompt.MaterialTapTargetPrompt;
 
-public class MainActivity extends AppCompatActivity implements ConnectivityReceiver.ConnectivityReceiverListener, MovieClickListener {
+public class MainActivity extends AppCompatActivity implements
+        ConnectivityReceiver.ConnectivityReceiverListener,
+        MovieClickListener {
 
     public static final String EXTRA_MOVIE_ITEM = "movie_image_url";
     public static final String EXTRA_MOVIE_IMAGE_TRANSITION_NAME = "movie_image_transition_name";
@@ -458,16 +461,17 @@ public class MainActivity extends AppCompatActivity implements ConnectivityRecei
     }
 
     private void retrieveFavMovies() {
-        final LiveData<List<Movie>> liveDataMovies = mDb.movieDao().getAllMovies();
+        // final LiveData<List<Movie>> liveDataMovies = mDb.movieDao().getAllMovies();
+        MainViewModel mainViewModel = ViewModelProviders.of(this).get(MainViewModel.class);
 
         if (favouriteMovies == null)
             favouriteMovies = new ArrayList<>();
 
-        liveDataMovies.observe(this, new Observer<List<Movie>>() {
+        mainViewModel.getMovies().observe(this, new Observer<List<Movie>>() {
             @Override
             public void onChanged(@Nullable List<Movie> movies) {
                 if (movies != null) {
-                    Log.d(TAG, "Movie Live Data changed.");
+                    Log.d(TAG, "Movie Live Data changed in View Model.");
 
                     favouriteMovies.clear();
                     favouriteMovies.addAll(movies);
