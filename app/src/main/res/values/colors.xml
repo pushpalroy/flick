@@ -11,6 +11,7 @@
 
     <color name="colorAccentAlpha">#88FF9800</color>
     <color name="colorBlackAlpha">#CC000000</color>
+    <color name="colorWhiteAlpha">#77FFFFFF</color>
 
     <color name="colorVeryLightGrey">#cfcfcf</color>
     <color name="colorTooLightGrey">#f5f5f5</color>

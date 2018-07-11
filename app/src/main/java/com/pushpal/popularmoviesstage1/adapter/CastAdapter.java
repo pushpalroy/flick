@@ -41,6 +41,7 @@ public class CastAdapter extends RecyclerView.Adapter<CastAdapter.CastViewHolder
     public void onBindViewHolder(@NonNull CastViewHolder holder, int position) {
         MovieCast movieCast = casts.get(position);
         holder.castName.setText(movieCast.getActorName());
+        holder.characterName.setText((movieCast.getCharacterName()));
         String imageURL = Constants.IMAGE_BASE_URL
                 + Constants.IMAGE_SIZE_185
                 + movieCast.getProfileImagePath();
@@ -62,6 +63,9 @@ public class CastAdapter extends RecyclerView.Adapter<CastAdapter.CastViewHolder
 
         @BindView(R.id.tv_cast_name)
         TextView castName;
+
+        @BindView(R.id.tv_character_name)
+        TextView characterName;
 
         CastViewHolder(View itemView) {
             super(itemView);

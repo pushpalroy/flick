@@ -21,6 +21,16 @@
         android:gravity="center_horizontal"
         android:maxLines="2"
         android:textAppearance="?android:attr/textAppearanceSmall"
+        android:textColor="@color/colorPrimaryText"
+        tools:text="James" />
+
+    <TextView
+        android:id="@+id/tv_character_name"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:gravity="center_horizontal"
+        android:maxLines="2"
+        android:textAppearance="?android:attr/textAppearanceSmall"
         android:textColor="@color/colorLightGreyText"
         tools:text="James" />
 

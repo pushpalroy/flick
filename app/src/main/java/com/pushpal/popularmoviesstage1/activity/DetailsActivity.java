@@ -22,11 +22,14 @@ import android.widget.Toast;
 
 import com.pushpal.popularmoviesstage1.R;
 import com.pushpal.popularmoviesstage1.adapter.CastAdapter;
+import com.pushpal.popularmoviesstage1.adapter.TrailerAdapter;
 import com.pushpal.popularmoviesstage1.database.AppExecutors;
 import com.pushpal.popularmoviesstage1.database.MovieDatabase;
 import com.pushpal.popularmoviesstage1.model.Movie;
 import com.pushpal.popularmoviesstage1.model.MovieCast;
 import com.pushpal.popularmoviesstage1.model.MovieCreditResponse;
+import com.pushpal.popularmoviesstage1.model.MovieTrailer;
+import com.pushpal.popularmoviesstage1.model.MovieTrailerResponse;
 import com.pushpal.popularmoviesstage1.networking.RESTClient;
 import com.pushpal.popularmoviesstage1.networking.RESTClientInterface;
 import com.pushpal.popularmoviesstage1.utilities.Constants;
@@ -70,6 +73,8 @@ public class DetailsActivity extends AppCompatActivity {
     CollapsingToolbarLayout collapsingToolbarLayout;
     @BindView(R.id.rv_cast)
     RecyclerView castRecyclerView;
+    @BindView(R.id.rv_trailer)
+    RecyclerView trailerRecyclerView;
     ActionBar actionBar;
     MovieDatabase mDb;
     private Context context;
@@ -100,6 +105,7 @@ public class DetailsActivity extends AppCompatActivity {
 
         if (movie != null) {
             fetchCredits(movie.getId());
+            fetchTrailers(movie.getId());
             movieTitle.setText(movie.getTitle());
             movieReleaseDate.setText(DateUtil.getFormattedDate(movie.getReleaseDate()));
             movieLanguage.setText(getLanguage(movie.getOriginalLanguage()));
@@ -243,6 +249,42 @@ public class DetailsActivity extends AppCompatActivity {
 
                 @Override
                 public void onFailure(@NonNull Call<MovieCreditResponse> call, @NonNull Throwable throwable) {
+                    // Log error here since request failed
+                    Log.e(TAG, throwable.toString());
+                }
+            });
+        }
+    }
+
+    public void fetchTrailers(int movieId) {
+        RESTClientInterface restClientInterface = RESTClient.getClient().create(RESTClientInterface.class);
+        Call<MovieTrailerResponse> call = restClientInterface.getTrailers(movieId, Constants.API_KEY);
+
+        if (call != null) {
+            call.enqueue(new retrofit2.Callback<MovieTrailerResponse>() {
+                @Override
+                public void onResponse(@NonNull Call<MovieTrailerResponse> call,
+                                       @NonNull Response<MovieTrailerResponse> response) {
+                    int statusCode = response.code();
+
+                    if (statusCode == 200) {
+                        if (response.body() != null) {
+                            MovieTrailerResponse movieTrailerResponse = response.body();
+                            List<MovieTrailer> trailers = movieTrailerResponse != null ? movieTrailerResponse.getTrailers() : null;
+
+                            RecyclerView.LayoutManager layoutManager = new LinearLayoutManager(DetailsActivity.this,
+                                    LinearLayoutManager.HORIZONTAL,
+                                    false);
+
+                            trailerRecyclerView.setLayoutManager(layoutManager);
+                            trailerRecyclerView.setHasFixedSize(true);
+                            trailerRecyclerView.setAdapter(new TrailerAdapter(trailers));
+                        }
+                    }
+                }
+
+                @Override
+                public void onFailure(@NonNull Call<MovieTrailerResponse> call, @NonNull Throwable throwable) {
                     // Log error here since request failed
                     Log.e(TAG, throwable.toString());
                 }
