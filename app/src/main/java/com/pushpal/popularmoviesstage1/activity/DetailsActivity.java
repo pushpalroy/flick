@@ -11,6 +11,8 @@ import android.support.design.widget.CollapsingToolbarLayout;
 import android.support.v7.app.ActionBar;
 import android.support.v7.app.AppCompatActivity;
 import android.support.v7.graphics.Palette;
+import android.support.v7.widget.LinearLayoutManager;
+import android.support.v7.widget.RecyclerView;
 import android.support.v7.widget.Toolbar;
 import android.util.Log;
 import android.view.View;
@@ -19,9 +21,14 @@ import android.widget.TextView;
 import android.widget.Toast;
 
 import com.pushpal.popularmoviesstage1.R;
+import com.pushpal.popularmoviesstage1.adapter.CastAdapter;
 import com.pushpal.popularmoviesstage1.database.AppExecutors;
 import com.pushpal.popularmoviesstage1.database.MovieDatabase;
 import com.pushpal.popularmoviesstage1.model.Movie;
+import com.pushpal.popularmoviesstage1.model.MovieCast;
+import com.pushpal.popularmoviesstage1.model.MovieCreditResponse;
+import com.pushpal.popularmoviesstage1.networking.RESTClient;
+import com.pushpal.popularmoviesstage1.networking.RESTClientInterface;
 import com.pushpal.popularmoviesstage1.utilities.Constants;
 import com.pushpal.popularmoviesstage1.utilities.DateUtil;
 import com.sackcentury.shinebuttonlib.ShineButton;
@@ -30,9 +37,12 @@ import com.squareup.picasso.Picasso;
 
 import java.io.IOException;
 import java.net.URL;
+import java.util.List;
 
 import butterknife.BindView;
 import butterknife.ButterKnife;
+import retrofit2.Call;
+import retrofit2.Response;
 
 public class DetailsActivity extends AppCompatActivity {
 
@@ -58,6 +68,8 @@ public class DetailsActivity extends AppCompatActivity {
     ShineButton likeButton;
     @BindView(R.id.collapsing_toolbar)
     CollapsingToolbarLayout collapsingToolbarLayout;
+    @BindView(R.id.rv_cast)
+    RecyclerView castRecyclerView;
     ActionBar actionBar;
     MovieDatabase mDb;
     private Context context;
@@ -87,6 +99,7 @@ public class DetailsActivity extends AppCompatActivity {
         mDb = MovieDatabase.getInstance(getApplicationContext());
 
         if (movie != null) {
+            fetchCredits(movie.getId());
             movieTitle.setText(movie.getTitle());
             movieReleaseDate.setText(DateUtil.getFormattedDate(movie.getReleaseDate()));
             movieLanguage.setText(getLanguage(movie.getOriginalLanguage()));
@@ -198,7 +211,42 @@ public class DetailsActivity extends AppCompatActivity {
                 }
             }
         }
-
         return isFav;
+    }
+
+    public void fetchCredits(int movieId) {
+        RESTClientInterface restClientInterface = RESTClient.getClient().create(RESTClientInterface.class);
+        Call<MovieCreditResponse> call = restClientInterface.getCredits(movieId, Constants.API_KEY);
+
+        if (call != null) {
+            call.enqueue(new retrofit2.Callback<MovieCreditResponse>() {
+                @Override
+                public void onResponse(@NonNull Call<MovieCreditResponse> call,
+                                       @NonNull Response<MovieCreditResponse> response) {
+                    int statusCode = response.code();
+
+                    if (statusCode == 200) {
+                        if (response.body() != null) {
+                            MovieCreditResponse movieCreditResponse = response.body();
+                            List<MovieCast> casts = movieCreditResponse != null ? movieCreditResponse.getCast() : null;
+
+                            RecyclerView.LayoutManager layoutManager = new LinearLayoutManager(DetailsActivity.this,
+                                    LinearLayoutManager.HORIZONTAL,
+                                    false);
+
+                            castRecyclerView.setLayoutManager(layoutManager);
+                            castRecyclerView.setHasFixedSize(true);
+                            castRecyclerView.setAdapter(new CastAdapter(casts));
+                        }
+                    }
+                }
+
+                @Override
+                public void onFailure(@NonNull Call<MovieCreditResponse> call, @NonNull Throwable throwable) {
+                    // Log error here since request failed
+                    Log.e(TAG, throwable.toString());
+                }
+            });
+        }
     }
 }

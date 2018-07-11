@@ -461,8 +461,8 @@ public class MainActivity extends AppCompatActivity implements
     }
 
     private void retrieveFavMovies() {
-        // final LiveData<List<Movie>> liveDataMovies = mDb.movieDao().getAllMovies();
-        MainViewModel mainViewModel = ViewModelProviders.of(this).get(MainViewModel.class);
+        MainViewModel mainViewModel = ViewModelProviders.of(this)
+                .get(MainViewModel.class);
 
         if (favouriteMovies == null)
             favouriteMovies = new ArrayList<>();

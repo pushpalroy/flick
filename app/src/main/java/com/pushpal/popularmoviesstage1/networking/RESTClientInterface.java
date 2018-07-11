@@ -1,5 +1,6 @@
 package com.pushpal.popularmoviesstage1.networking;
 
+import com.pushpal.popularmoviesstage1.model.MovieCreditResponse;
 import com.pushpal.popularmoviesstage1.model.MovieLang;
 import com.pushpal.popularmoviesstage1.model.MovieResponse;
 import com.pushpal.popularmoviesstage1.utilities.Constants;
@@ -32,4 +33,7 @@ public interface RESTClientInterface {
 
     @GET(Constants.LANGUAGES)
     Call<List<MovieLang>> getLanguages(@Query("api_key") String apiKey);
+
+    @GET(Constants.CREDITS_URL)
+    Call<MovieCreditResponse> getCredits(@Path("movie_id") int movieId, @Query("api_key") String apiKey);
 }

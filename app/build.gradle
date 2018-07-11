@@ -76,6 +76,9 @@ dependencies {
     // Calligraphy
     implementation 'uk.co.chrisjenx:calligraphy:2.2.0'
 
+    // Circular Image View
+    implementation 'de.hdodenhof:circleimageview:2.2.0'
+
     // Testing Libraries
     testImplementation 'junit:junit:4.12'
     androidTestImplementation 'com.android.support.test:runner:1.0.2'
