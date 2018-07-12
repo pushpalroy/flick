@@ -17,17 +17,21 @@ import android.support.v7.widget.Toolbar;
 import android.util.Log;
 import android.view.View;
 import android.widget.ImageView;
+import android.widget.LinearLayout;
 import android.widget.TextView;
 import android.widget.Toast;
 
 import com.pushpal.popularmoviesstage1.R;
 import com.pushpal.popularmoviesstage1.adapter.CastAdapter;
+import com.pushpal.popularmoviesstage1.adapter.ReviewAdapter;
 import com.pushpal.popularmoviesstage1.adapter.TrailerAdapter;
 import com.pushpal.popularmoviesstage1.database.AppExecutors;
 import com.pushpal.popularmoviesstage1.database.MovieDatabase;
 import com.pushpal.popularmoviesstage1.model.Movie;
 import com.pushpal.popularmoviesstage1.model.MovieCast;
 import com.pushpal.popularmoviesstage1.model.MovieCreditResponse;
+import com.pushpal.popularmoviesstage1.model.MovieReview;
+import com.pushpal.popularmoviesstage1.model.MovieReviewResponse;
 import com.pushpal.popularmoviesstage1.model.MovieTrailer;
 import com.pushpal.popularmoviesstage1.model.MovieTrailerResponse;
 import com.pushpal.popularmoviesstage1.networking.RESTClient;
@@ -75,6 +79,12 @@ public class DetailsActivity extends AppCompatActivity {
     RecyclerView castRecyclerView;
     @BindView(R.id.rv_trailer)
     RecyclerView trailerRecyclerView;
+    @BindView(R.id.ll_trailers)
+    LinearLayout trailerLayout;
+    @BindView(R.id.rv_review)
+    RecyclerView reviewRecyclerView;
+    @BindView(R.id.ll_reviews)
+    LinearLayout reviewLayout;
     ActionBar actionBar;
     MovieDatabase mDb;
     private Context context;
@@ -106,6 +116,8 @@ public class DetailsActivity extends AppCompatActivity {
         if (movie != null) {
             fetchCredits(movie.getId());
             fetchTrailers(movie.getId());
+            fetchReviews(movie.getId());
+
             movieTitle.setText(movie.getTitle());
             movieReleaseDate.setText(DateUtil.getFormattedDate(movie.getReleaseDate()));
             movieLanguage.setText(getLanguage(movie.getOriginalLanguage()));
@@ -272,19 +284,63 @@ public class DetailsActivity extends AppCompatActivity {
                             MovieTrailerResponse movieTrailerResponse = response.body();
                             List<MovieTrailer> trailers = movieTrailerResponse != null ? movieTrailerResponse.getTrailers() : null;
 
-                            RecyclerView.LayoutManager layoutManager = new LinearLayoutManager(DetailsActivity.this,
-                                    LinearLayoutManager.HORIZONTAL,
-                                    false);
+                            if (trailers != null && trailers.size() > 0) {
+                                RecyclerView.LayoutManager layoutManager = new LinearLayoutManager(DetailsActivity.this,
+                                        LinearLayoutManager.HORIZONTAL,
+                                        false);
 
-                            trailerRecyclerView.setLayoutManager(layoutManager);
-                            trailerRecyclerView.setHasFixedSize(true);
-                            trailerRecyclerView.setAdapter(new TrailerAdapter(trailers));
+                                trailerRecyclerView.setLayoutManager(layoutManager);
+                                trailerRecyclerView.setHasFixedSize(true);
+                                trailerRecyclerView.setAdapter(new TrailerAdapter(trailers));
+                            } else {
+                                trailerLayout.setVisibility(View.GONE);
+                            }
                         }
                     }
                 }
 
                 @Override
                 public void onFailure(@NonNull Call<MovieTrailerResponse> call, @NonNull Throwable throwable) {
+                    // Log error here since request failed
+                    Log.e(TAG, throwable.toString());
+                }
+            });
+        }
+    }
+
+    public void fetchReviews(int movieId) {
+        RESTClientInterface restClientInterface = RESTClient.getClient().create(RESTClientInterface.class);
+        Call<MovieReviewResponse> call = restClientInterface.getReviews(movieId, Constants.API_KEY);
+
+        if (call != null) {
+            call.enqueue(new retrofit2.Callback<MovieReviewResponse>() {
+                @Override
+                public void onResponse(@NonNull Call<MovieReviewResponse> call,
+                                       @NonNull Response<MovieReviewResponse> response) {
+                    int statusCode = response.code();
+
+                    if (statusCode == 200) {
+                        if (response.body() != null) {
+                            MovieReviewResponse movieReviewResponse = response.body();
+                            List<MovieReview> reviews = movieReviewResponse != null ? movieReviewResponse.getReviews() : null;
+
+                            if (reviews != null && reviews.size() > 0) {
+                                RecyclerView.LayoutManager layoutManager = new LinearLayoutManager(DetailsActivity.this,
+                                        LinearLayoutManager.HORIZONTAL,
+                                        false);
+
+                                reviewRecyclerView.setLayoutManager(layoutManager);
+                                reviewRecyclerView.setHasFixedSize(true);
+                                reviewRecyclerView.setAdapter(new ReviewAdapter(reviews));
+                            } else {
+                                reviewLayout.setVisibility(View.GONE);
+                            }
+                        }
+                    }
+                }
+
+                @Override
+                public void onFailure(@NonNull Call<MovieReviewResponse> call, @NonNull Throwable throwable) {
                     // Log error here since request failed
                     Log.e(TAG, throwable.toString());
                 }

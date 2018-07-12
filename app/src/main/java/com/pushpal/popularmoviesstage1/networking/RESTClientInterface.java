@@ -3,6 +3,7 @@ package com.pushpal.popularmoviesstage1.networking;
 import com.pushpal.popularmoviesstage1.model.MovieCreditResponse;
 import com.pushpal.popularmoviesstage1.model.MovieLang;
 import com.pushpal.popularmoviesstage1.model.MovieResponse;
+import com.pushpal.popularmoviesstage1.model.MovieReviewResponse;
 import com.pushpal.popularmoviesstage1.model.MovieTrailerResponse;
 import com.pushpal.popularmoviesstage1.utilities.Constants;
 
@@ -40,4 +41,7 @@ public interface RESTClientInterface {
 
     @GET(Constants.TRAILERS_URL)
     Call<MovieTrailerResponse> getTrailers(@Path("movie_id") int movieId, @Query("api_key") String apiKey);
+
+    @GET(Constants.REVIEWS_URL)
+    Call<MovieReviewResponse> getReviews(@Path("movie_id") int movieId, @Query("api_key") String apiKey);
 }
