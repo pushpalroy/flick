@@ -17,6 +17,8 @@
         android:id="@+id/tv_review"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
+        android:ellipsize="end"
+        android:maxLines="10"
         android:textAppearance="?android:attr/textAppearanceSmall"
         android:textColor="@color/colorLightGreyText"
         tools:text="James" />

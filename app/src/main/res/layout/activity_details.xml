@@ -10,7 +10,7 @@
 
     <android.support.design.widget.AppBarLayout
         android:layout_width="match_parent"
-        android:layout_height="400dp"
+        android:layout_height="@dimen/app_bar_layout_height"
         android:theme="@style/ThemeOverlay.AppCompat.Dark.ActionBar">
 
         <android.support.design.widget.CollapsingToolbarLayout
@@ -19,12 +19,12 @@
             android:layout_height="match_parent"
             android:fitsSystemWindows="true"
             app:contentScrim="@color/colorPrimary"
-            app:layout_scrollFlags="scroll|exitUntilCollapsed|snap">
+            app:layout_scrollFlags="scroll|exitUntilCollapsed">
 
             <ImageView
                 android:id="@+id/iv_movie_poster"
                 android:layout_width="match_parent"
-                android:layout_height="400dp"
+                android:layout_height="@dimen/app_bar_layout_height"
                 android:adjustViewBounds="true"
                 android:contentDescription="@string/app_name"
                 android:scaleType="centerCrop"
