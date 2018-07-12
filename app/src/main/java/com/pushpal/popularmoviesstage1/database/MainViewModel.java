@@ -13,17 +13,31 @@ import java.util.List;
 public class MainViewModel extends AndroidViewModel {
 
     private static final String TAG = MainViewModel.class.getSimpleName();
-    private LiveData<List<Movie>> movies;
+    private LiveData<List<Movie>> favMovies;
+    private List<Movie> movies;
 
     public MainViewModel(@NonNull Application application) {
         super(application);
 
         MovieDatabase movieDatabase = MovieDatabase.getInstance(this.getApplication());
-        Log.d(TAG, "Actively retrieving the movies from the database");
-        movies = movieDatabase.movieDao().getAllMovies();
+        Log.d(TAG, "Actively retrieving the favMovies from the database");
+        favMovies = movieDatabase.movieDao().getAllMovies();
     }
 
-    public LiveData<List<Movie>> getMovies() {
+    @Override
+    protected void onCleared() {
+        super.onCleared();
+    }
+
+    public LiveData<List<Movie>> getFavMovies() {
+        return favMovies;
+    }
+
+    public List<Movie> getMovies() {
         return movies;
+    }
+
+    public void setMovies(List<Movie> movies) {
+        this.movies = movies;
     }
 }

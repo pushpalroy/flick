@@ -132,7 +132,7 @@ public class DetailsActivity extends AppCompatActivity {
                 moviePoster.setTransitionName(imageTransitionName);
             }
 
-            String imageURL = Constants.IMAGE_BASE_URL
+            final String imageURL = Constants.IMAGE_BASE_URL
                     + Constants.IMAGE_SIZE_342
                     + movie.getPosterPath();
             Picasso.with(this)
@@ -149,23 +149,28 @@ public class DetailsActivity extends AppCompatActivity {
                         }
                     });
 
-            try {
-                URL url = new URL(imageURL);
-                Bitmap bitmap = BitmapFactory.decodeStream(url.openConnection().getInputStream());
-                Palette.from(bitmap).generate(new Palette.PaletteAsyncListener() {
-                    @Override
-                    public void onGenerated(@NonNull Palette palette) {
-                        int mutedColor = palette.getMutedColor(R.attr.colorPrimary);
-                        collapsingToolbarLayout.setContentScrimColor(mutedColor);
+            AppExecutors.getInstance().diskIO().execute(new Runnable() {
+                @Override
+                public void run() {
+                    try {
+                        URL url = new URL(imageURL);
+                        Bitmap bitmap = BitmapFactory.decodeStream(url.openConnection().getInputStream());
+                        Palette.from(bitmap).generate(new Palette.PaletteAsyncListener() {
+                            @Override
+                            public void onGenerated(@NonNull Palette palette) {
+                                int mutedColor = palette.getMutedColor(R.attr.colorPrimary);
+                                collapsingToolbarLayout.setContentScrimColor(mutedColor);
+                            }
+                        });
+                    } catch (IOException e) {
+                        Log.e(TAG, e.getMessage());
                     }
-                });
-            } catch (IOException e) {
-                Log.e(TAG, e.getMessage());
-            }
+                }
+            });
 
-            if (isFavourite(movie)) {
+            if (isFavourite(movie))
                 likeButton.setChecked(true);
-            }
+
 
             final Movie finalMovie = movie;
             likeButton.setOnCheckStateChangeListener(new ShineButton.OnCheckedChangeListener() {

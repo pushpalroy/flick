@@ -5,6 +5,7 @@ import android.arch.lifecycle.ViewModelProviders;
 import android.content.Context;
 import android.content.Intent;
 import android.content.IntentFilter;
+import android.content.SharedPreferences;
 import android.graphics.Color;
 import android.net.ConnectivityManager;
 import android.os.Bundle;
@@ -35,7 +36,6 @@ import com.pushpal.popularmoviesstage1.R;
 import com.pushpal.popularmoviesstage1.adapter.MovieAdapter;
 import com.pushpal.popularmoviesstage1.adapter.MovieClickListener;
 import com.pushpal.popularmoviesstage1.database.MainViewModel;
-import com.pushpal.popularmoviesstage1.database.MovieDatabase;
 import com.pushpal.popularmoviesstage1.model.Movie;
 import com.pushpal.popularmoviesstage1.model.MovieLang;
 import com.pushpal.popularmoviesstage1.model.MovieResponse;
@@ -66,6 +66,11 @@ public class MainActivity extends AppCompatActivity implements
 
     public static final String EXTRA_MOVIE_ITEM = "movie_image_url";
     public static final String EXTRA_MOVIE_IMAGE_TRANSITION_NAME = "movie_image_transition_name";
+    public static final String SORT_TYPE = "sort_type";
+    public static final String ADAPTER_POSITION = "adapter_position";
+    public static final String CALL_PAGE = "call_page";
+    public static final String CALL_PAGE_PENDING = "call_page_pending";
+
     private static final String TAG = MainActivity.class.getSimpleName();
     public static Map<String, String> languageMap;
     public static List<Movie> favouriteMovies;
@@ -90,7 +95,7 @@ public class MainActivity extends AppCompatActivity implements
     Snackbar mSnackBar;
     int callPage, callPagePending;
     String sortCategory;
-    boolean tapTargetShown = false, isCozyView = false;
+    boolean isCozyView = false;
     @BindView(R.id.iv_popular_icon)
     ImageView popularIcon;
     @BindView(R.id.iv_top_rated_icon)
@@ -98,7 +103,8 @@ public class MainActivity extends AppCompatActivity implements
     @BindView(R.id.iv_favourite_icon)
     ImageView favouriteIcon;
     private List<Movie> movies;
-    private MovieDatabase mDb;
+    private int adapterPosition = 0;
+    private String resumeStatus = "normal";
 
     @Override
     protected void attachBaseContext(Context newBase) {
@@ -112,18 +118,89 @@ public class MainActivity extends AppCompatActivity implements
 
         // ButterKnife Binding
         ButterKnife.bind(this);
-
-        mDb = MovieDatabase.getInstance(getApplicationContext());
         setSupportActionBar(toolbar);
+
         resetData();
         setupRecyclerView();
-        addListeners();
+        implementPagination();
+
         startLoader();
         fetchLanguages();
         retrieveFavMovies();
 
-        // Fetching page 1
-        fetchMovies(callPage);
+        // Fetching page 1, top rated
+        topRatedIcon.setColorFilter(getResources()
+                .getColor(R.color.colorFilter));
+    }
+
+    @Override
+    public void onSaveInstanceState(Bundle outState) {
+        super.onSaveInstanceState(outState);
+
+        outState.putString(SORT_TYPE, sortCategory);
+        outState.putInt(CALL_PAGE, callPage);
+        outState.putInt(CALL_PAGE_PENDING, callPagePending);
+        outState.putInt(ADAPTER_POSITION, mLayoutManager.findFirstCompletelyVisibleItemPosition());
+
+        MainViewModel mainViewModel = ViewModelProviders.of(this).get(MainViewModel.class);
+        mainViewModel.setMovies(movies);
+    }
+
+    @Override
+    protected void onRestoreInstanceState(Bundle savedInstanceState) {
+        super.onRestoreInstanceState(savedInstanceState);
+
+        callPage = savedInstanceState.getInt(CALL_PAGE);
+        callPagePending = savedInstanceState.getInt(CALL_PAGE_PENDING);
+
+        if (savedInstanceState.containsKey(SORT_TYPE) && savedInstanceState.containsKey(ADAPTER_POSITION)) {
+            sortCategory = savedInstanceState.getString(SORT_TYPE);
+            adapterPosition = savedInstanceState.getInt(ADAPTER_POSITION);
+            resetAndSetIconFilters(sortCategory);
+            resumeStatus = "rotated";
+        } else
+            sortCategory = Constants.CATEGORY_TOP_RATED;
+    }
+
+    @Override
+    protected void onResume() {
+        super.onResume();
+
+        if (resumeStatus.equals("normal")) {
+            if (!sortCategory.equals(Constants.CATEGORY_FAVOURITE))
+                fetchMovies(callPage);
+            else {
+                setFavourite();
+                dismissLoader();
+                fab.setVisibility(View.VISIBLE);
+            }
+        } else if (resumeStatus.equals("rotated")) {
+            MainViewModel mainViewModel = ViewModelProviders.of(this)
+                    .get(MainViewModel.class);
+            if (movies != null) {
+                movies.clear();
+                movies.addAll(mainViewModel.getMovies());
+            }
+            mAdapter.notifyItemInserted(movies.size() - 1);
+            mAdapter.notifyDataSetChanged();
+            mRecyclerView.scheduleLayoutAnimation();
+            if (adapterPosition != 0) {
+                mRecyclerView.smoothScrollToPosition(adapterPosition);
+                adapterPosition = 0;
+            }
+            dismissLoader();
+            fab.setVisibility(View.VISIBLE);
+        }
+
+        // Register connection status listener
+        final IntentFilter intentFilter = new IntentFilter();
+        intentFilter.addAction(ConnectivityManager.CONNECTIVITY_ACTION);
+
+        ConnectivityReceiver connectivityReceiver = new ConnectivityReceiver();
+        registerReceiver(connectivityReceiver, intentFilter);
+
+        /* Register connection status listener */
+        MovieApplication.getInstance().setConnectivityListener(this);
     }
 
     protected void fetchMovies(final int page) {
@@ -153,14 +230,15 @@ public class MainActivity extends AppCompatActivity implements
                             mAdapter.notifyItemInserted(movies.size() - 1);
                             mAdapter.notifyDataSetChanged();
                             mRecyclerView.scheduleLayoutAnimation();
+                            if (adapterPosition != 0) {
+                                mRecyclerView.smoothScrollToPosition(adapterPosition);
+                                adapterPosition = 0;
+                            }
                         }
                     }
                     dismissLoader();
-
-                    if (!tapTargetShown) {
-                        fab.setVisibility(View.VISIBLE);
-                        showTapTargetView(fab);
-                    }
+                    fab.setVisibility(View.VISIBLE);
+                    showTapTargetView(fab);
                 }
 
                 @Override
@@ -185,8 +263,8 @@ public class MainActivity extends AppCompatActivity implements
         callPage = 1;
     }
 
-    protected void addListeners() {
-        RecyclerView.OnScrollListener onScrollListener = new RecyclerView.OnScrollListener() {
+    protected void implementPagination() {
+        mRecyclerView.addOnScrollListener(new RecyclerView.OnScrollListener() {
             @Override
             public void onScrolled(RecyclerView recyclerView, int dx, int dy) {
 
@@ -209,23 +287,7 @@ public class MainActivity extends AppCompatActivity implements
                     }
                 }
             }
-        };
-        mRecyclerView.addOnScrollListener(onScrollListener);
-    }
-
-    @Override
-    protected void onResume() {
-        super.onResume();
-
-        // Register connection status listener
-        final IntentFilter intentFilter = new IntentFilter();
-        intentFilter.addAction(ConnectivityManager.CONNECTIVITY_ACTION);
-
-        ConnectivityReceiver connectivityReceiver = new ConnectivityReceiver();
-        registerReceiver(connectivityReceiver, intentFilter);
-
-        /* Register connection status listener */
-        MovieApplication.getInstance().setConnectivityListener(this);
+        });
     }
 
     @Override
@@ -302,23 +364,27 @@ public class MainActivity extends AppCompatActivity implements
     }
 
     private void showTapTargetView(View targetView) {
-        // Show tap target view for FAB
-        new MaterialTapTargetPrompt.Builder(MainActivity.this)
-                .setTarget(targetView)
-                .setPrimaryText("Sort movies")
-                .setSecondaryText("Tap the sort icon to select the order of movies.")
-                .setPromptStateChangeListener(new MaterialTapTargetPrompt.PromptStateChangeListener() {
-                    @Override
-                    public void onPromptStateChanged(MaterialTapTargetPrompt prompt, int state) {
-                        if (state == MaterialTapTargetPrompt.STATE_FOCAL_PRESSED) {
-                            // User has pressed the prompt target
+        SharedPreferences sharedPref = this.getPreferences(Context.MODE_PRIVATE);
+        if (!sharedPref.getBoolean(getString(R.string.isTapToTargetShown), false)) {
+            // Show tap target view for FAB
+            new MaterialTapTargetPrompt.Builder(MainActivity.this)
+                    .setTarget(targetView)
+                    .setPrimaryText("Sort movies")
+                    .setSecondaryText("Tap the sort icon to select the order of movies.")
+                    .setPromptStateChangeListener(new MaterialTapTargetPrompt.PromptStateChangeListener() {
+                        @Override
+                        public void onPromptStateChanged(@NonNull MaterialTapTargetPrompt prompt, int state) {
+                            if (state == MaterialTapTargetPrompt.STATE_FOCAL_PRESSED) {
+                                // User has pressed the prompt target
+                            }
                         }
-                    }
-                })
-                .show();
+                    })
+                    .show();
 
-        // Once shown, will not be shown after
-        tapTargetShown = true;
+            SharedPreferences.Editor editor = sharedPref.edit();
+            editor.putBoolean(getString(R.string.isTapToTargetShown), true);
+            editor.apply();
+        }
     }
 
     @OnClick(R.id.fab)
@@ -341,7 +407,11 @@ public class MainActivity extends AppCompatActivity implements
     @OnClick(R.id.overlay)
     void onClickOverlay() {
         if (fab.getVisibility() != View.VISIBLE) {
-            FabTransformation.with(fab).setOverlay(overlayView).transformFrom(sortLayout);
+            try {
+                FabTransformation.with(fab).setOverlay(overlayView).transformFrom(sortLayout);
+            } catch (IllegalStateException e) {
+                Log.e(TAG, e.getMessage());
+            }
         }
     }
 
@@ -350,8 +420,7 @@ public class MainActivity extends AppCompatActivity implements
         if (!(sortCategory.equals(Constants.CATEGORY_MOST_POPULAR))) {
             resetData();
             sortCategory = Constants.CATEGORY_MOST_POPULAR;
-            clearIconFilters();
-            popularIcon.setColorFilter(getResources().getColor(R.color.colorFilter));
+            resetAndSetIconFilters(sortCategory);
             fetchMovies(callPage);
         }
         onClickOverlay();
@@ -362,8 +431,7 @@ public class MainActivity extends AppCompatActivity implements
         if (!(sortCategory.equals(Constants.CATEGORY_TOP_RATED))) {
             resetData();
             sortCategory = Constants.CATEGORY_TOP_RATED;
-            clearIconFilters();
-            topRatedIcon.setColorFilter(getResources().getColor(R.color.colorFilter));
+            resetAndSetIconFilters(sortCategory);
             fetchMovies(callPage);
         }
         onClickOverlay();
@@ -374,21 +442,35 @@ public class MainActivity extends AppCompatActivity implements
         if (!(sortCategory.equals(Constants.CATEGORY_FAVOURITE))) {
             resetData();
             sortCategory = Constants.CATEGORY_FAVOURITE;
-            clearIconFilters();
-            favouriteIcon.setColorFilter(getResources().getColor(R.color.colorFilter));
-            setTitle(getString(R.string.action_favourite));
-
-            setFavList(favouriteMovies);
-            mAdapter.notifyDataSetChanged();
-            mRecyclerView.scheduleLayoutAnimation();
+            resetAndSetIconFilters(sortCategory);
+            setFavourite();
         }
         onClickOverlay();
     }
 
-    public void clearIconFilters() {
+    public void setFavourite() {
+        setTitle(getString(R.string.action_favourite));
+
+        setFavList(favouriteMovies);
+        mAdapter.notifyDataSetChanged();
+        mRecyclerView.scheduleLayoutAnimation();
+    }
+
+    public void resetAndSetIconFilters(String sortCategory) {
         popularIcon.setColorFilter(getResources().getColor(R.color.colorIconGrey));
         topRatedIcon.setColorFilter(getResources().getColor(R.color.colorIconGrey));
         favouriteIcon.setColorFilter(getResources().getColor(R.color.colorIconGrey));
+
+        switch (sortCategory) {
+            case Constants.CATEGORY_FAVOURITE:
+                favouriteIcon.setColorFilter(getResources().getColor(R.color.colorFilter));
+                break;
+            case Constants.CATEGORY_MOST_POPULAR:
+                popularIcon.setColorFilter(getResources().getColor(R.color.colorFilter));
+                break;
+            case Constants.CATEGORY_TOP_RATED:
+                topRatedIcon.setColorFilter(getResources().getColor(R.color.colorFilter));
+        }
     }
 
     public void fetchLanguages() {
@@ -457,6 +539,10 @@ public class MainActivity extends AppCompatActivity implements
                 sharedImageView,
                 ViewCompat.getTransitionName(sharedImageView));
 
+        MainViewModel mainViewModel = ViewModelProviders.of(this).get(MainViewModel.class);
+        mainViewModel.setMovies(movies);
+
+        resumeStatus = "intent";
         startActivity(intent, options.toBundle());
     }
 
@@ -467,7 +553,7 @@ public class MainActivity extends AppCompatActivity implements
         if (favouriteMovies == null)
             favouriteMovies = new ArrayList<>();
 
-        mainViewModel.getMovies().observe(this, new Observer<List<Movie>>() {
+        mainViewModel.getFavMovies().observe(this, new Observer<List<Movie>>() {
             @Override
             public void onChanged(@Nullable List<Movie> movies) {
                 if (movies != null) {

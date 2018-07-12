@@ -11,6 +11,9 @@ public class Constants {
     public static final String LATEST_MOVIES_URL = "movie/latest";
     public static final String MOVIE_DETAILS_URL = "movie/{id}";
     public static final String LANGUAGES = "configuration/languages";
+    public static final String CREDITS_URL = "movie/{movie_id}/credits";
+    public static final String TRAILERS_URL = "movie/{movie_id}/videos";
+    public static final String REVIEWS_URL = "movie/{movie_id}/reviews";
 
     public static final String DISCOVER_URL = BASE_URL + "discover/movie?api_key=" + API_KEY;
 
