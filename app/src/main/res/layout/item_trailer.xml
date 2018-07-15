@@ -4,10 +4,9 @@
     android:id="@+id/card_view"
     style="@style/CardView"
     android:layout_width="190dp"
-    android:layout_height="130dp"
+    android:layout_height="140dp"
     android:layout_marginBottom="4dp"
-    android:layout_marginEnd="4dp"
-    android:layout_marginStart="4dp"
+    android:layout_marginStart="20dp"
     android:layout_marginTop="4dp"
     card_view:cardCornerRadius="2dp"
     card_view:cardElevation="2dp">
@@ -21,8 +20,7 @@
             android:layout_width="match_parent"
             android:layout_height="match_parent"
             android:contentDescription="@string/item_description"
-            android:scaleType="centerCrop"
-            android:src="@drawable/ic_launcher_foreground" />
+            android:scaleType="centerCrop" />
 
         <ImageView
             android:layout_width="match_parent"

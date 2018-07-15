@@ -22,7 +22,7 @@ import butterknife.ButterKnife;
 public class CastAdapter extends RecyclerView.Adapter<CastAdapter.CastViewHolder> {
 
     private Context context;
-    private List<MovieCast> casts;
+    private final List<MovieCast> casts;
 
     public CastAdapter(List<MovieCast> casts) {
         this.casts = casts;

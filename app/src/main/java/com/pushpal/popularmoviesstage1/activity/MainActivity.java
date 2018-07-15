@@ -19,7 +19,6 @@ import android.support.v4.content.ContextCompat;
 import android.support.v4.view.ViewCompat;
 import android.support.v7.app.AppCompatActivity;
 import android.support.v7.widget.CardView;
-import android.support.v7.widget.GridLayoutManager;
 import android.support.v7.widget.RecyclerView;
 import android.support.v7.widget.Toolbar;
 import android.util.Log;
@@ -33,6 +32,7 @@ import android.widget.TextView;
 
 import com.konifar.fab_transformation.FabTransformation;
 import com.pushpal.popularmoviesstage1.R;
+import com.pushpal.popularmoviesstage1.adapter.GridAutoFitLayoutManager;
 import com.pushpal.popularmoviesstage1.adapter.MovieAdapter;
 import com.pushpal.popularmoviesstage1.adapter.MovieClickListener;
 import com.pushpal.popularmoviesstage1.database.MainViewModel;
@@ -64,16 +64,9 @@ public class MainActivity extends AppCompatActivity implements
         ConnectivityReceiver.ConnectivityReceiverListener,
         MovieClickListener {
 
-    public static final String EXTRA_MOVIE_ITEM = "movie_image_url";
-    public static final String EXTRA_MOVIE_IMAGE_TRANSITION_NAME = "movie_image_transition_name";
-    public static final String SORT_TYPE = "sort_type";
-    public static final String ADAPTER_POSITION = "adapter_position";
-    public static final String CALL_PAGE = "call_page";
-    public static final String CALL_PAGE_PENDING = "call_page_pending";
-
     private static final String TAG = MainActivity.class.getSimpleName();
-    public static Map<String, String> languageMap;
-    public static List<Movie> favouriteMovies;
+    public static Map<String, String> sLanguageMap;
+    public static List<Movie> sFavouriteMovies;
     @BindView(R.id.poster_recycler_view)
     RecyclerView mRecyclerView;
     @BindView(R.id.coordinatorLayout)
@@ -90,21 +83,22 @@ public class MainActivity extends AppCompatActivity implements
     CardView sortLayout;
     @BindView(R.id.overlay)
     View overlayView;
-    MovieAdapter mAdapter;
-    GridLayoutManager mLayoutManager;
-    Snackbar mSnackBar;
-    int callPage, callPagePending;
-    String sortCategory;
-    boolean isCozyView = false;
+    @BindView(R.id.toolbarExtended)
+    TextView toolbarExt;
     @BindView(R.id.iv_popular_icon)
     ImageView popularIcon;
     @BindView(R.id.iv_top_rated_icon)
     ImageView topRatedIcon;
     @BindView(R.id.iv_favourite_icon)
     ImageView favouriteIcon;
-    private List<Movie> movies;
-    private int adapterPosition = 0;
-    private String resumeStatus = "normal";
+    private MainViewModel mMainViewModel;
+    private GridAutoFitLayoutManager mLayoutManager;
+    private MovieAdapter mAdapter;
+    private Snackbar mSnackBar;
+    private int mCallPage, mCallPagePending, mAdapterPosition = 0;
+    private String mSortCategory, mArrangementType, mResumeType = Constants.RESUME_NORMAL;
+    private boolean mViewToggle = false;
+    private List<Movie> mMovieList;
 
     @Override
     protected void attachBaseContext(Context newBase) {
@@ -116,10 +110,9 @@ public class MainActivity extends AppCompatActivity implements
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_main);
 
-        // ButterKnife Binding
         ButterKnife.bind(this);
-        setSupportActionBar(toolbar);
 
+        setUpToolbar();
         resetData();
         setupRecyclerView();
         implementPagination();
@@ -130,66 +123,72 @@ public class MainActivity extends AppCompatActivity implements
 
         // Fetching page 1, top rated
         topRatedIcon.setColorFilter(getResources()
-                .getColor(R.color.colorFilter));
+                .getColor(R.color.colorAccent));
+    }
+
+    private void setUpToolbar() {
+        setSupportActionBar(toolbar);
+        if (getSupportActionBar() != null)
+            getSupportActionBar().setDisplayShowTitleEnabled(false);
+        toolbar.setNavigationIcon(getResources().getDrawable(R.drawable.ic_flick, null));
     }
 
     @Override
     public void onSaveInstanceState(Bundle outState) {
         super.onSaveInstanceState(outState);
 
-        outState.putString(SORT_TYPE, sortCategory);
-        outState.putInt(CALL_PAGE, callPage);
-        outState.putInt(CALL_PAGE_PENDING, callPagePending);
-        outState.putInt(ADAPTER_POSITION, mLayoutManager.findFirstCompletelyVisibleItemPosition());
+        outState.putString(Constants.SORT_TYPE, mSortCategory);
+        outState.putInt(Constants.CALL_PAGE, mCallPage);
+        outState.putInt(Constants.CALL_PAGE_PENDING, mCallPagePending);
+        outState.putInt(Constants.ADAPTER_POSITION, mLayoutManager.findFirstCompletelyVisibleItemPosition());
+        outState.putString(Constants.ARRANGEMENT_TYPE, mAdapter.getArrangementType());
 
-        MainViewModel mainViewModel = ViewModelProviders.of(this).get(MainViewModel.class);
-        mainViewModel.setMovies(movies);
+        mMainViewModel.setMovies(mMovieList);
     }
 
     @Override
     protected void onRestoreInstanceState(Bundle savedInstanceState) {
         super.onRestoreInstanceState(savedInstanceState);
 
-        callPage = savedInstanceState.getInt(CALL_PAGE);
-        callPagePending = savedInstanceState.getInt(CALL_PAGE_PENDING);
+        mCallPage = savedInstanceState.getInt(Constants.CALL_PAGE);
+        mCallPagePending = savedInstanceState.getInt(Constants.CALL_PAGE_PENDING);
 
-        if (savedInstanceState.containsKey(SORT_TYPE) && savedInstanceState.containsKey(ADAPTER_POSITION)) {
-            sortCategory = savedInstanceState.getString(SORT_TYPE);
-            adapterPosition = savedInstanceState.getInt(ADAPTER_POSITION);
-            resetAndSetIconFilters(sortCategory);
-            resumeStatus = "rotated";
-        } else
-            sortCategory = Constants.CATEGORY_TOP_RATED;
+        if (savedInstanceState.containsKey(Constants.SORT_TYPE) &&
+                savedInstanceState.containsKey(Constants.ADAPTER_POSITION)) {
+            mSortCategory = savedInstanceState.getString(Constants.SORT_TYPE);
+            mAdapterPosition = savedInstanceState.getInt(Constants.ADAPTER_POSITION);
+            mArrangementType = savedInstanceState.getString(Constants.ARRANGEMENT_TYPE);
+            resetAndSetIconFilters(mSortCategory);
+            mResumeType = Constants.RESUME_AFTER_ROTATION;
+        } else {
+            mSortCategory = Constants.CATEGORY_TOP_RATED;
+        }
     }
 
     @Override
     protected void onResume() {
         super.onResume();
 
-        if (resumeStatus.equals("normal")) {
-            if (!sortCategory.equals(Constants.CATEGORY_FAVOURITE))
-                fetchMovies(callPage);
+        if (mResumeType.equals(Constants.RESUME_NORMAL)) {
+            if (!mSortCategory.equals(Constants.CATEGORY_FAVOURITE))
+                fetchMovies(mCallPage);
             else {
                 setFavourite();
                 dismissLoader();
                 fab.setVisibility(View.VISIBLE);
             }
-        } else if (resumeStatus.equals("rotated")) {
-            MainViewModel mainViewModel = ViewModelProviders.of(this)
-                    .get(MainViewModel.class);
-            if (movies != null) {
-                movies.clear();
-                movies.addAll(mainViewModel.getMovies());
+        } else if (mResumeType.equals(Constants.RESUME_AFTER_ROTATION)) {
+            if (mMovieList != null) {
+                mMovieList.clear();
+                mMovieList.addAll(mMainViewModel.getMovies());
             }
-            mAdapter.notifyItemInserted(movies.size() - 1);
-            mAdapter.notifyDataSetChanged();
-            mRecyclerView.scheduleLayoutAnimation();
-            if (adapterPosition != 0) {
-                mRecyclerView.smoothScrollToPosition(adapterPosition);
-                adapterPosition = 0;
-            }
+
+            toolbarExt.setText(mSortCategory);
+            rearrangeRecyclerView(mArrangementType);
+
             dismissLoader();
             fab.setVisibility(View.VISIBLE);
+            mResumeType = Constants.RESUME_NORMAL;
         }
 
         // Register connection status listener
@@ -203,17 +202,17 @@ public class MainActivity extends AppCompatActivity implements
         MovieApplication.getInstance().setConnectivityListener(this);
     }
 
-    protected void fetchMovies(final int page) {
+    private void fetchMovies(final int page) {
         RESTClientInterface restClientInterface = RESTClient.getClient().create(RESTClientInterface.class);
         Call<MovieResponse> call = null;
 
-        switch (sortCategory) {
+        switch (mSortCategory) {
             case Constants.CATEGORY_TOP_RATED:
-                setTitle(getString(R.string.action_top_rated));
+                toolbarExt.setText(getString(R.string.action_top_rated));
                 call = restClientInterface.getTopRatedMovies(Constants.API_KEY, page);
                 break;
             case Constants.CATEGORY_MOST_POPULAR:
-                setTitle(getString(R.string.action_most_popular));
+                toolbarExt.setText(getString(R.string.action_most_popular));
                 call = restClientInterface.getPopularMovies(Constants.API_KEY, page);
                 break;
         }
@@ -226,13 +225,13 @@ public class MainActivity extends AppCompatActivity implements
 
                     if (statusCode == 200) {
                         if (response.body().getResults() != null) {
-                            movies.addAll(response.body().getResults());
-                            mAdapter.notifyItemInserted(movies.size() - 1);
+                            mMovieList.addAll(response.body().getResults());
+                            mAdapter.notifyItemInserted(mMovieList.size() - 1);
                             mAdapter.notifyDataSetChanged();
                             mRecyclerView.scheduleLayoutAnimation();
-                            if (adapterPosition != 0) {
-                                mRecyclerView.smoothScrollToPosition(adapterPosition);
-                                adapterPosition = 0;
+                            if (mAdapterPosition != 0) {
+                                mRecyclerView.smoothScrollToPosition(mAdapterPosition);
+                                mAdapterPosition = 0;
                             }
                         }
                     }
@@ -246,44 +245,45 @@ public class MainActivity extends AppCompatActivity implements
                     // Log error here since request failed
                     Log.e(TAG, throwable.toString());
                     dismissLoader();
-                    callPagePending = callPage;
-                    callPage--;
+                    mCallPagePending = mCallPage;
+                    mCallPage--;
                 }
             });
         }
     }
 
     private void resetData() {
-        if (movies != null)
-            movies.clear();
+        mMainViewModel = ViewModelProviders.of(this).get(MainViewModel.class);
+
+        if (mMovieList != null)
+            mMovieList.clear();
 
         // By default sort order is set to top rated
-        sortCategory = Constants.CATEGORY_TOP_RATED;
-        callPagePending = 0;
-        callPage = 1;
+        mSortCategory = Constants.CATEGORY_TOP_RATED;
+        mCallPagePending = 0;
+        mCallPage = 1;
     }
 
-    protected void implementPagination() {
+    private void implementPagination() {
         mRecyclerView.addOnScrollListener(new RecyclerView.OnScrollListener() {
             @Override
             public void onScrolled(RecyclerView recyclerView, int dx, int dy) {
 
                 int totalItemCount = mLayoutManager.getItemCount();
 
-                // callPage: Has value 1 at first, increments by 1
+                // mCallPage: Has value 1 at first, increments by 1
                 // dy > 0: Checks if scroll direction is downwards
-                // ((totalItemCount / 20) == callPage)): Checks if page needs to be incremented,
+                // ((totalItemCount / 20) == mCallPage)): Checks if page needs to be incremented,
                 // here the API returns 20 items per page
 
-                if ((dy > 0) && ((totalItemCount / 20) == callPage)) {
+                if ((dy > 0) && ((totalItemCount / 20) == mCallPage)) {
                     int visibleItemCount = mLayoutManager.getChildCount();
                     int pastVisibleItems = mLayoutManager.findFirstVisibleItemPosition();
 
                     // Checks whether reached near the end of recycler view, 10 items less than total items
                     if (pastVisibleItems + visibleItemCount >= (totalItemCount - 10)) {
-                        callPage++;
-                        fetchMovies(callPage);
-                        //Toast.makeText(MainActivity.this, String.valueOf(callPage), Toast.LENGTH_SHORT).show();
+                        mCallPage++;
+                        fetchMovies(mCallPage);
                     }
                 }
             }
@@ -295,10 +295,10 @@ public class MainActivity extends AppCompatActivity implements
         if (isConnected) {
             if (mSnackBar != null)
                 mSnackBar.dismiss();
-            if (callPagePending != 0) {
-                fetchMovies(callPagePending);
-                callPage = callPagePending;
-                callPagePending = 0;
+            if (mCallPagePending != 0) {
+                fetchMovies(mCallPagePending);
+                mCallPage = mCallPagePending;
+                mCallPagePending = 0;
             }
         } else {
             showSnack();
@@ -331,6 +331,7 @@ public class MainActivity extends AppCompatActivity implements
 
     // Start loader
     private void startLoader() {
+        loader.setLoadingColor(R.color.colorAccent);
         loaderContainer.setVisibility(View.VISIBLE);
         loader.start();
     }
@@ -344,23 +345,34 @@ public class MainActivity extends AppCompatActivity implements
     }
 
     private void setupRecyclerView() {
-        final Context context = mRecyclerView.getContext();
-        mLayoutManager = new GridLayoutManager(context, 3);
+        mMovieList = new ArrayList<>();
+
+        mAdapter = new MovieAdapter(mMovieList, Constants.ARRANGEMENT_COMPACT, this);
+        mLayoutManager = new GridAutoFitLayoutManager(this, 300);
         mRecyclerView.setLayoutManager(mLayoutManager);
-        movies = new ArrayList<>();
-        mAdapter = new MovieAdapter(movies, Constants.ARRANGEMENT_COMPACT, this);
         mRecyclerView.setAdapter(mAdapter);
-        loader.setLoadingColor(R.color.colorAccent);
     }
 
-    private void rearrangeRecyclerView(String arrangementType, int spanCount) {
-        final Context context = mRecyclerView.getContext();
-        mLayoutManager = new GridLayoutManager(context, spanCount);
+    private void rearrangeRecyclerView(String arrangementType) {
+
+        if (!mResumeType.equals("rotated"))
+            mAdapterPosition = mLayoutManager.findFirstVisibleItemPosition();
+
+        mAdapter = new MovieAdapter(mMovieList, arrangementType, this);
+
+        if (arrangementType.equals(Constants.ARRANGEMENT_COZY))
+            mLayoutManager = new GridAutoFitLayoutManager(this, 500);
+        else mLayoutManager = new GridAutoFitLayoutManager(this, 300);
+
         mRecyclerView.setLayoutManager(mLayoutManager);
-        mAdapter = new MovieAdapter(movies, arrangementType, this);
         mRecyclerView.setAdapter(mAdapter);
         mAdapter.notifyDataSetChanged();
         mRecyclerView.scheduleLayoutAnimation();
+
+        if (mAdapterPosition != 0) {
+            mRecyclerView.scrollToPosition(mAdapterPosition);
+            mAdapterPosition = 0;
+        }
     }
 
     private void showTapTargetView(View targetView) {
@@ -369,8 +381,8 @@ public class MainActivity extends AppCompatActivity implements
             // Show tap target view for FAB
             new MaterialTapTargetPrompt.Builder(MainActivity.this)
                     .setTarget(targetView)
-                    .setPrimaryText("Sort movies")
-                    .setSecondaryText("Tap the sort icon to select the order of movies.")
+                    .setPrimaryText("Sort mMovieList")
+                    .setSecondaryText("Tap the sort icon to select the order of mMovieList.")
                     .setPromptStateChangeListener(new MaterialTapTargetPrompt.PromptStateChangeListener() {
                         @Override
                         public void onPromptStateChanged(@NonNull MaterialTapTargetPrompt prompt, int state) {
@@ -417,63 +429,62 @@ public class MainActivity extends AppCompatActivity implements
 
     @OnClick(R.id.ll_most_popular)
     public void onMostPopularSelected() {
-        if (!(sortCategory.equals(Constants.CATEGORY_MOST_POPULAR))) {
+        if (!(mSortCategory.equals(Constants.CATEGORY_MOST_POPULAR))) {
             resetData();
-            sortCategory = Constants.CATEGORY_MOST_POPULAR;
-            resetAndSetIconFilters(sortCategory);
-            fetchMovies(callPage);
+            mSortCategory = Constants.CATEGORY_MOST_POPULAR;
+            resetAndSetIconFilters(mSortCategory);
+            fetchMovies(mCallPage);
         }
         onClickOverlay();
     }
 
     @OnClick(R.id.ll_top_rated)
     public void onTopRatedSelected() {
-        if (!(sortCategory.equals(Constants.CATEGORY_TOP_RATED))) {
+        if (!(mSortCategory.equals(Constants.CATEGORY_TOP_RATED))) {
             resetData();
-            sortCategory = Constants.CATEGORY_TOP_RATED;
-            resetAndSetIconFilters(sortCategory);
-            fetchMovies(callPage);
+            mSortCategory = Constants.CATEGORY_TOP_RATED;
+            resetAndSetIconFilters(mSortCategory);
+            fetchMovies(mCallPage);
         }
         onClickOverlay();
     }
 
     @OnClick(R.id.ll_favourite)
     public void onFavouriteSelected() {
-        if (!(sortCategory.equals(Constants.CATEGORY_FAVOURITE))) {
+        if (!(mSortCategory.equals(Constants.CATEGORY_FAVOURITE))) {
             resetData();
-            sortCategory = Constants.CATEGORY_FAVOURITE;
-            resetAndSetIconFilters(sortCategory);
+            mSortCategory = Constants.CATEGORY_FAVOURITE;
+            resetAndSetIconFilters(mSortCategory);
             setFavourite();
         }
         onClickOverlay();
     }
 
-    public void setFavourite() {
-        setTitle(getString(R.string.action_favourite));
-
-        setFavList(favouriteMovies);
+    private void setFavourite() {
+        toolbarExt.setText(getString(R.string.action_favourite));
+        setFavList(sFavouriteMovies);
         mAdapter.notifyDataSetChanged();
         mRecyclerView.scheduleLayoutAnimation();
     }
 
-    public void resetAndSetIconFilters(String sortCategory) {
+    private void resetAndSetIconFilters(String sortCategory) {
         popularIcon.setColorFilter(getResources().getColor(R.color.colorIconGrey));
         topRatedIcon.setColorFilter(getResources().getColor(R.color.colorIconGrey));
         favouriteIcon.setColorFilter(getResources().getColor(R.color.colorIconGrey));
 
         switch (sortCategory) {
             case Constants.CATEGORY_FAVOURITE:
-                favouriteIcon.setColorFilter(getResources().getColor(R.color.colorFilter));
+                favouriteIcon.setColorFilter(getResources().getColor(R.color.colorAccent));
                 break;
             case Constants.CATEGORY_MOST_POPULAR:
-                popularIcon.setColorFilter(getResources().getColor(R.color.colorFilter));
+                popularIcon.setColorFilter(getResources().getColor(R.color.colorAccent));
                 break;
             case Constants.CATEGORY_TOP_RATED:
-                topRatedIcon.setColorFilter(getResources().getColor(R.color.colorFilter));
+                topRatedIcon.setColorFilter(getResources().getColor(R.color.colorAccent));
         }
     }
 
-    public void fetchLanguages() {
+    private void fetchLanguages() {
         RESTClientInterface restClientInterface = RESTClient.getClient().create(RESTClientInterface.class);
         Call<List<MovieLang>> call;
         final List<MovieLang> finalMovieLanguages = new ArrayList<>();
@@ -489,9 +500,9 @@ public class MainActivity extends AppCompatActivity implements
                     if (statusCode == 200) {
                         if (response.body() != null) {
                             finalMovieLanguages.addAll(response.body());
-                            languageMap = new HashMap<>();
+                            sLanguageMap = new HashMap<>();
                             for (MovieLang movieLang : finalMovieLanguages)
-                                languageMap.put(movieLang.getAbbreviation(), movieLang.getEnglishName());
+                                sLanguageMap.put(movieLang.getAbbreviation(), movieLang.getEnglishName());
                         }
                     }
                 }
@@ -516,12 +527,12 @@ public class MainActivity extends AppCompatActivity implements
     @Override
     public boolean onOptionsItemSelected(MenuItem item) {
         if (item.getItemId() == R.id.action_view_type) {
-            isCozyView = !isCozyView;
-            if (isCozyView) {
-                rearrangeRecyclerView(Constants.ARRANGEMENT_COZY, 2);
+            mViewToggle = !mViewToggle;
+            if (mViewToggle) {
+                rearrangeRecyclerView(Constants.ARRANGEMENT_COZY);
                 item.setIcon(ContextCompat.getDrawable(this, R.drawable.view_small_icon));
             } else {
-                rearrangeRecyclerView(Constants.ARRANGEMENT_COMPACT, 3);
+                rearrangeRecyclerView(Constants.ARRANGEMENT_COMPACT);
                 item.setIcon(ContextCompat.getDrawable(this, R.drawable.view_large_icon));
             }
         }
@@ -531,39 +542,34 @@ public class MainActivity extends AppCompatActivity implements
     @Override
     public void onMovieClick(int pos, Movie movie, ImageView sharedImageView) {
         Intent intent = new Intent(this, DetailsActivity.class);
-        intent.putExtra(EXTRA_MOVIE_ITEM, movie);
-        intent.putExtra(EXTRA_MOVIE_IMAGE_TRANSITION_NAME, ViewCompat.getTransitionName(sharedImageView));
+        intent.putExtra(Constants.EXTRA_MOVIE_ITEM, movie);
+        intent.putExtra(Constants.EXTRA_MOVIE_IMAGE_TRANSITION_NAME, ViewCompat.getTransitionName(sharedImageView));
 
         ActivityOptionsCompat options = ActivityOptionsCompat.makeSceneTransitionAnimation(
                 this,
                 sharedImageView,
                 ViewCompat.getTransitionName(sharedImageView));
 
-        MainViewModel mainViewModel = ViewModelProviders.of(this).get(MainViewModel.class);
-        mainViewModel.setMovies(movies);
-
-        resumeStatus = "intent";
+        mMainViewModel.setMovies(mMovieList);
+        mResumeType = "intent";
         startActivity(intent, options.toBundle());
     }
 
     private void retrieveFavMovies() {
-        MainViewModel mainViewModel = ViewModelProviders.of(this)
-                .get(MainViewModel.class);
+        if (sFavouriteMovies == null)
+            sFavouriteMovies = new ArrayList<>();
 
-        if (favouriteMovies == null)
-            favouriteMovies = new ArrayList<>();
-
-        mainViewModel.getFavMovies().observe(this, new Observer<List<Movie>>() {
+        mMainViewModel.getFavMovies().observe(this, new Observer<List<Movie>>() {
             @Override
             public void onChanged(@Nullable List<Movie> movies) {
                 if (movies != null) {
-                    Log.d(TAG, "Movie Live Data changed in View Model.");
+                    Log.e(TAG, "Movie Live Data changed in View Model.");
 
-                    favouriteMovies.clear();
-                    favouriteMovies.addAll(movies);
+                    sFavouriteMovies.clear();
+                    sFavouriteMovies.addAll(movies);
 
-                    if (sortCategory.equals(Constants.CATEGORY_FAVOURITE))
-                        setFavList(favouriteMovies);
+                    if (mSortCategory.equals(Constants.CATEGORY_FAVOURITE))
+                        setFavList(sFavouriteMovies);
 
                     mAdapter.notifyDataSetChanged();
                     mRecyclerView.scheduleLayoutAnimation();
@@ -573,7 +579,7 @@ public class MainActivity extends AppCompatActivity implements
     }
 
     private void setFavList(List<Movie> movies) {
-        this.movies.clear();
-        this.movies.addAll(movies);
+        this.mMovieList.clear();
+        this.mMovieList.addAll(movies);
     }
 }

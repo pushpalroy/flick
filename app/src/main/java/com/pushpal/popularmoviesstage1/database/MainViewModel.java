@@ -13,20 +13,15 @@ import java.util.List;
 public class MainViewModel extends AndroidViewModel {
 
     private static final String TAG = MainViewModel.class.getSimpleName();
-    private LiveData<List<Movie>> favMovies;
+    private final LiveData<List<Movie>> favMovies;
     private List<Movie> movies;
 
     public MainViewModel(@NonNull Application application) {
         super(application);
 
         MovieDatabase movieDatabase = MovieDatabase.getInstance(this.getApplication());
-        Log.d(TAG, "Actively retrieving the favMovies from the database");
+        Log.e(TAG, "Actively retrieving the favMovies from the database");
         favMovies = movieDatabase.movieDao().getAllMovies();
-    }
-
-    @Override
-    protected void onCleared() {
-        super.onCleared();
     }
 
     public LiveData<List<Movie>> getFavMovies() {

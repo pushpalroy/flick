@@ -85,8 +85,7 @@ public class DetailsActivity extends AppCompatActivity {
     RecyclerView reviewRecyclerView;
     @BindView(R.id.ll_reviews)
     LinearLayout reviewLayout;
-    ActionBar actionBar;
-    MovieDatabase mDb;
+    private ActionBar actionBar;
     private Context context;
 
     @Override
@@ -109,9 +108,7 @@ public class DetailsActivity extends AppCompatActivity {
         Bundle extras = getIntent().getExtras();
         Movie movie = null;
         if (extras != null)
-            movie = extras.getParcelable(MainActivity.EXTRA_MOVIE_ITEM);
-
-        mDb = MovieDatabase.getInstance(getApplicationContext());
+            movie = extras.getParcelable(Constants.EXTRA_MOVIE_ITEM);
 
         if (movie != null) {
             fetchCredits(movie.getId());
@@ -128,7 +125,7 @@ public class DetailsActivity extends AppCompatActivity {
             collapsingToolbarLayout.setTitle(movie.getTitle());
 
             if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.LOLLIPOP) {
-                String imageTransitionName = extras.getString(MainActivity.EXTRA_MOVIE_IMAGE_TRANSITION_NAME);
+                String imageTransitionName = extras.getString(Constants.EXTRA_MOVIE_IMAGE_TRANSITION_NAME);
                 moviePoster.setTransitionName(imageTransitionName);
             }
 
@@ -209,13 +206,8 @@ public class DetailsActivity extends AppCompatActivity {
         }
     }
 
-    @Override
-    protected void onResume() {
-        super.onResume();
-    }
-
     private String getLanguage(String languageAbbr) {
-        return MainActivity.languageMap.get(languageAbbr);
+        return MainActivity.sLanguageMap.get(languageAbbr);
     }
 
     @Override
@@ -226,8 +218,8 @@ public class DetailsActivity extends AppCompatActivity {
 
     private boolean isFavourite(Movie movie) {
         boolean isFav = false;
-        if (MainActivity.favouriteMovies != null) {
-            for (Movie favMovie : MainActivity.favouriteMovies) {
+        if (MainActivity.sFavouriteMovies != null) {
+            for (Movie favMovie : MainActivity.sFavouriteMovies) {
                 if (movie.getId().equals(favMovie.getId())) {
                     isFav = true;
                     break;
@@ -237,7 +229,7 @@ public class DetailsActivity extends AppCompatActivity {
         return isFav;
     }
 
-    public void fetchCredits(int movieId) {
+    private void fetchCredits(int movieId) {
         RESTClientInterface restClientInterface = RESTClient.getClient().create(RESTClientInterface.class);
         Call<MovieCreditResponse> call = restClientInterface.getCredits(movieId, Constants.API_KEY);
 
@@ -273,7 +265,7 @@ public class DetailsActivity extends AppCompatActivity {
         }
     }
 
-    public void fetchTrailers(int movieId) {
+    private void fetchTrailers(int movieId) {
         RESTClientInterface restClientInterface = RESTClient.getClient().create(RESTClientInterface.class);
         Call<MovieTrailerResponse> call = restClientInterface.getTrailers(movieId, Constants.API_KEY);
 
@@ -313,7 +305,7 @@ public class DetailsActivity extends AppCompatActivity {
         }
     }
 
-    public void fetchReviews(int movieId) {
+    private void fetchReviews(int movieId) {
         RESTClientInterface restClientInterface = RESTClient.getClient().create(RESTClientInterface.class);
         Call<MovieReviewResponse> call = restClientInterface.getReviews(movieId, Constants.API_KEY);
 
@@ -331,7 +323,7 @@ public class DetailsActivity extends AppCompatActivity {
 
                             if (reviews != null && reviews.size() > 0) {
                                 RecyclerView.LayoutManager layoutManager = new LinearLayoutManager(DetailsActivity.this,
-                                        LinearLayoutManager.HORIZONTAL,
+                                        LinearLayoutManager.VERTICAL,
                                         false);
 
                                 reviewRecyclerView.setLayoutManager(layoutManager);

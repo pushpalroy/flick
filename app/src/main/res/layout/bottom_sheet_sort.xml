@@ -1,5 +1,4 @@
 <io.codetail.widget.RevealFrameLayout xmlns:android="http://schemas.android.com/apk/res/android"
-    android:id="@+id/reveal_frame_layout"
     android:layout_width="match_parent"
     android:layout_height="wrap_content"
     android:layout_gravity="bottom">
@@ -42,6 +41,7 @@
                 android:layout_height="match_parent"
                 android:layout_below="@id/divider"
                 android:orientation="horizontal"
+                android:baselineAligned="false"
                 android:weightSum="3">
 
                 <LinearLayout

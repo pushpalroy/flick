@@ -6,8 +6,7 @@
     <string name="action_most_popular">Most Popular</string>
     <string name="action_top_rated">Top Rated</string>
     <string name="action_favourite">Favourites</string>
-    <string name="sort">Sort</string>
-    <string name="category">Category</string>
+    <string name="category">Choose Category</string>
     <string name="votes">votes</string>
     <string name="overview">Overview</string>
     <string name="cast">Cast</string>
@@ -15,4 +14,6 @@
     <string name="reviews">Reviews</string>
 
     <string name="isTapToTargetShown">is Tap To Target Shown</string>
+    <string name="dot_separator">dot separator</string>
+    <string name="vote_count_icon">vote count icon</string>
 </resources>

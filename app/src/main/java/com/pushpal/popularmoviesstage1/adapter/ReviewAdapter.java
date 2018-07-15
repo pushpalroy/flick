@@ -18,8 +18,7 @@ import butterknife.ButterKnife;
 
 public class ReviewAdapter extends RecyclerView.Adapter<ReviewAdapter.ReviewViewHolder> {
 
-    private Context context;
-    private List<MovieReview> reviews;
+    private final List<MovieReview> reviews;
 
     public ReviewAdapter(List<MovieReview> reviews) {
         this.reviews = reviews;
@@ -28,7 +27,7 @@ public class ReviewAdapter extends RecyclerView.Adapter<ReviewAdapter.ReviewView
     @NonNull
     @Override
     public ReviewViewHolder onCreateViewHolder(@NonNull ViewGroup parent, int viewType) {
-        context = parent.getContext();
+        Context context = parent.getContext();
 
         return new ReviewViewHolder(LayoutInflater.from(context)
                 .inflate(R.layout.item_review, parent, false));

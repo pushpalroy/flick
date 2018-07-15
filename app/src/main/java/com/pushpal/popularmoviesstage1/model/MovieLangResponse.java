@@ -4,7 +4,7 @@ import com.google.gson.annotations.SerializedName;
 
 import java.util.List;
 
-public class MovieLangResponse {
+class MovieLangResponse {
 
     @SerializedName("JSON")
     private List<MovieLang> languages;

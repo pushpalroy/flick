@@ -8,11 +8,10 @@ public class DateUtil {
     // 2017-09-01 ----> Sep 2017
     public static String getFormattedDate(String hyphenatedDate) {
         String[] dateArray = hyphenatedDate.split("-");
-        String year = "", monthValue = "", day = "", month;
+        String year = "", monthValue = "", month;
         try {
             year = dateArray[0];
             monthValue = dateArray[1];
-            day = dateArray[2];
         } catch (ArrayIndexOutOfBoundsException e) {
             Log.e(TAG, e.getMessage());
         }

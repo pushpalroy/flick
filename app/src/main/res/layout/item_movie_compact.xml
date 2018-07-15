@@ -22,8 +22,7 @@
             android:layout_width="match_parent"
             android:layout_height="match_parent"
             android:contentDescription="@string/item_description"
-            android:scaleType="centerCrop"
-            android:src="@drawable/ic_launcher_foreground" />
+            android:scaleType="centerCrop" />
 
         <TextView
             android:id="@+id/tv_vote_count"
@@ -36,6 +35,7 @@
             android:padding="10dp"
             android:textColor="@color/colorWhite"
             android:textSize="10sp"
+            tools:ignore="SmallSp"
             tools:text="8.5" />
     </RelativeLayout>
 

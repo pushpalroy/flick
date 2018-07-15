@@ -32,8 +32,8 @@ public class MovieAdapter extends RecyclerView.Adapter<RecyclerView.ViewHolder> 
 
     private static final String TAG = MovieAdapter.class.getSimpleName();
     private final MovieClickListener movieClickListener;
-    private List<Movie> movies;
-    private String arrangementType;
+    private final List<Movie> movies;
+    private final String arrangementType;
     private Context context;
 
     public MovieAdapter(List<Movie> movies, String arrangementType, MovieClickListener movieClickListener) {
@@ -72,8 +72,9 @@ public class MovieAdapter extends RecyclerView.Adapter<RecyclerView.ViewHolder> 
                     + movie.getPosterPath();
             Picasso.with(((MovieCompactViewHolder) holder).itemView.getContext())
                     .load(imageURL)
-                    //.placeholder(R.drawable.ic_launcher_foreground)
-                    //.error(R.drawable.ic_launcher_background)
+                    .fit().centerCrop()
+                    .placeholder(R.drawable.placeholder)
+                    .error(R.drawable.pop_mov_plain_logo)
                     .into(((MovieCompactViewHolder) holder).moviePosterImageView);
 
             ((MovieCompactViewHolder) holder).voteCount
@@ -100,6 +101,9 @@ public class MovieAdapter extends RecyclerView.Adapter<RecyclerView.ViewHolder> 
                     + movie.getPosterPath();
             Picasso.with(((MovieCozyViewHolder) holder).itemView.getContext())
                     .load(imageURL)
+                    .fit().centerCrop()
+                    .placeholder(R.drawable.placeholder)
+                    .error(R.drawable.pop_mov_plain_logo)
                     .into(((MovieCozyViewHolder) holder).moviePosterImageView);
 
             ViewCompat.setTransitionName(((MovieCozyViewHolder) holder)
@@ -162,7 +166,7 @@ public class MovieAdapter extends RecyclerView.Adapter<RecyclerView.ViewHolder> 
     }
 
     private String getLanguage(String languageAbbr) {
-        return MainActivity.languageMap.get(languageAbbr);
+        return MainActivity.sLanguageMap.get(languageAbbr);
     }
 
     @Override
@@ -181,8 +185,8 @@ public class MovieAdapter extends RecyclerView.Adapter<RecyclerView.ViewHolder> 
 
     private boolean isFavourite(Movie movie) {
         boolean isFav = false;
-        if (MainActivity.favouriteMovies != null) {
-            for (Movie favMovie : MainActivity.favouriteMovies) {
+        if (MainActivity.sFavouriteMovies != null) {
+            for (Movie favMovie : MainActivity.sFavouriteMovies) {
                 if (movie.getId().equals(favMovie.getId())) {
                     isFav = true;
                     break;
@@ -191,6 +195,10 @@ public class MovieAdapter extends RecyclerView.Adapter<RecyclerView.ViewHolder> 
         }
 
         return isFav;
+    }
+
+    public String getArrangementType() {
+        return arrangementType;
     }
 
     // Compact View Holder
@@ -209,7 +217,6 @@ public class MovieAdapter extends RecyclerView.Adapter<RecyclerView.ViewHolder> 
             ButterKnife.bind(this, itemView);
         }
     }
-
 
     // Cozy View Holder
     static class MovieCozyViewHolder extends RecyclerView.ViewHolder {

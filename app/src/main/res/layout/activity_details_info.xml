@@ -44,6 +44,7 @@
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
             android:layout_marginStart="8dp"
+            android:contentDescription="@string/dot_separator"
             app:layout_constraintBottom_toBottomOf="@+id/tv_movie_release_date"
             app:layout_constraintStart_toEndOf="@+id/tv_movie_release_date"
             app:layout_constraintTop_toTopOf="@+id/tv_movie_release_date"
@@ -62,9 +63,10 @@
 
         <ImageView
             android:id="@+id/imageView"
-            android:layout_width="24dp"
-            android:layout_height="24dp"
+            android:layout_width="20dp"
+            android:layout_height="20dp"
             android:layout_marginEnd="5dp"
+            android:contentDescription="@string/vote_count_icon"
             android:layout_marginTop="5dp"
             app:layout_constraintEnd_toStartOf="@+id/tv_vote_average"
             app:layout_constraintTop_toTopOf="@+id/tv_vote_average"
@@ -88,6 +90,7 @@
             android:layout_height="wrap_content"
             android:layout_marginEnd="8dp"
             android:layout_marginTop="8dp"
+
             android:textAppearance="?android:attr/textAppearanceSmall"
             app:layout_constraintEnd_toEndOf="parent"
             app:layout_constraintTop_toBottomOf="@+id/imageView"
@@ -103,7 +106,7 @@
             android:id="@+id/cl_overview"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            android:layout_margin="24dp">
+            android:layout_margin="20dp">
 
             <TextView
                 android:id="@+id/tv_overview_label"
@@ -117,8 +120,8 @@
 
             <com.sackcentury.shinebuttonlib.ShineButton
                 android:id="@+id/btn_favourite"
-                android:layout_width="24dp"
-                android:layout_height="24dp"
+                android:layout_width="20dp"
+                android:layout_height="20dp"
                 android:layout_alignParentEnd="true"
                 android:src="@android:color/darker_gray"
                 app:allow_random_color="false"
@@ -140,7 +143,7 @@
                 android:id="@+id/tv_overview"
                 android:layout_width="0dp"
                 android:layout_height="wrap_content"
-                android:layout_marginTop="24dp"
+                android:layout_marginTop="20dp"
                 android:textAppearance="?android:attr/textAppearanceSmall"
                 android:textColor="@color/colorIconGrey"
                 app:layout_constraintEnd_toEndOf="parent"
@@ -157,12 +160,11 @@
             android:orientation="vertical">
 
             <TextView
-                android:id="@+id/tv_cast_label"
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
-                android:layout_marginBottom="24dp"
-                android:layout_marginEnd="24dp"
-                android:layout_marginStart="24dp"
+                android:layout_marginBottom="20dp"
+                android:layout_marginEnd="20dp"
+                android:layout_marginStart="20dp"
                 android:text="@string/cast"
                 android:textAppearance="?android:attr/textAppearanceSmall"
                 android:textStyle="bold" />
@@ -170,9 +172,7 @@
             <android.support.v7.widget.RecyclerView
                 android:id="@+id/rv_cast"
                 android:layout_width="match_parent"
-
-                android:layout_height="wrap_content"
-                android:layout_marginStart="24dp" />
+                android:layout_height="wrap_content" />
         </LinearLayout>
 
         <LinearLayout
@@ -183,10 +183,9 @@
             android:orientation="vertical">
 
             <TextView
-                android:id="@+id/tv_trailer_label"
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
-                android:layout_margin="24dp"
+                android:layout_margin="20dp"
                 android:text="@string/trailers"
                 android:textAppearance="?android:attr/textAppearanceSmall"
                 android:textStyle="bold" />
@@ -194,8 +193,7 @@
             <android.support.v7.widget.RecyclerView
                 android:id="@+id/rv_trailer"
                 android:layout_width="match_parent"
-                android:layout_height="wrap_content"
-                android:layout_marginStart="24dp" />
+                android:layout_height="wrap_content" />
         </LinearLayout>
 
         <LinearLayout
@@ -206,10 +204,9 @@
             android:orientation="vertical">
 
             <TextView
-                android:id="@+id/tv_review_label"
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
-                android:layout_margin="24dp"
+                android:layout_margin="20dp"
                 android:text="@string/reviews"
                 android:textAppearance="?android:attr/textAppearanceSmall"
                 android:textStyle="bold" />
@@ -218,9 +215,11 @@
                 android:id="@+id/rv_review"
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
-                android:layout_marginBottom="24dp"
-                android:layout_marginEnd="24dp"
-                android:layout_marginStart="24dp" />
+                android:layout_marginBottom="20dp"
+                android:layout_marginEnd="20dp"
+                android:layout_marginStart="20dp"
+                android:background="@color/colorWhite"
+                android:padding="16dp" />
         </LinearLayout>
     </RelativeLayout>
 </android.support.constraint.ConstraintLayout>

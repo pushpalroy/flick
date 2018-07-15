@@ -2,24 +2,27 @@
 <LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
     xmlns:tools="http://schemas.android.com/tools"
     android:layout_width="match_parent"
-    android:layout_height="match_parent"
+    android:layout_height="wrap_content"
+    android:layout_marginBottom="20dp"
     android:orientation="vertical">
 
     <TextView
         android:id="@+id/tv_reviewer"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
-        android:layout_marginBottom="5dp"
+        android:layout_marginBottom="3dp"
         android:textAppearance="?android:attr/textAppearanceSmall"
+        android:textColor="@color/colorPrimary"
         tools:text="James" />
 
     <TextView
         android:id="@+id/tv_review"
         android:layout_width="match_parent"
-        android:layout_height="wrap_content"
+        android:layout_height="match_parent"
         android:ellipsize="end"
-        android:maxLines="10"
+        android:maxLines="8"
         android:textAppearance="?android:attr/textAppearanceSmall"
-        android:textColor="@color/colorLightGreyText"
+        android:textColor="@color/colorIconGrey"
         tools:text="James" />
 </LinearLayout>
+

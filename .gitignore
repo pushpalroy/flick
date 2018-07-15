@@ -8,5 +8,4 @@
 /build
 /captures
 .externalNativeBuild
-credentials.xml
-Constants.java
+gradle.properties

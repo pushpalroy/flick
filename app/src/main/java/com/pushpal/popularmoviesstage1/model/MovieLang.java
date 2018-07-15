@@ -5,7 +5,7 @@ import com.google.gson.annotations.SerializedName;
 public class MovieLang {
 
     @SerializedName("name")
-    public String name;
+    private String name;
     @SerializedName("iso_639_1")
     private String abbreviation;
     @SerializedName("english_name")
