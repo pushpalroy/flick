@@ -16,4 +16,5 @@
     <string name="isTapToTargetShown">is Tap To Target Shown</string>
     <string name="dot_separator">dot separator</string>
     <string name="vote_count_icon">vote count icon</string>
+    <string name="born_on">Born on</string>
 </resources>

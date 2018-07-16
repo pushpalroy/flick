@@ -38,6 +38,7 @@ import com.pushpal.popularmoviesstage1.networking.RESTClient;
 import com.pushpal.popularmoviesstage1.networking.RESTClientInterface;
 import com.pushpal.popularmoviesstage1.utilities.Constants;
 import com.pushpal.popularmoviesstage1.utilities.DateUtil;
+import com.pushpal.popularmoviesstage1.utilities.MovieUtils;
 import com.sackcentury.shinebuttonlib.ShineButton;
 import com.squareup.picasso.Callback;
 import com.squareup.picasso.Picasso;
@@ -85,7 +86,6 @@ public class DetailsActivity extends AppCompatActivity {
     RecyclerView reviewRecyclerView;
     @BindView(R.id.ll_reviews)
     LinearLayout reviewLayout;
-    private ActionBar actionBar;
     private Context context;
 
     @Override
@@ -94,16 +94,8 @@ public class DetailsActivity extends AppCompatActivity {
         setContentView(R.layout.activity_details);
 
         ButterKnife.bind(this);
+        setUpActionBar();
         context = this;
-
-        supportPostponeEnterTransition();
-        setSupportActionBar(toolbar);
-        actionBar = getSupportActionBar();
-
-        if (actionBar != null) {
-            actionBar.setDisplayHomeAsUpEnabled(true);
-            actionBar.setDisplayShowHomeEnabled(true);
-        }
 
         Bundle extras = getIntent().getExtras();
         Movie movie = null;
@@ -146,64 +138,44 @@ public class DetailsActivity extends AppCompatActivity {
                         }
                     });
 
-            AppExecutors.getInstance().diskIO().execute(new Runnable() {
-                @Override
-                public void run() {
-                    try {
-                        URL url = new URL(imageURL);
-                        Bitmap bitmap = BitmapFactory.decodeStream(url.openConnection().getInputStream());
-                        Palette.from(bitmap).generate(new Palette.PaletteAsyncListener() {
-                            @Override
-                            public void onGenerated(@NonNull Palette palette) {
-                                int mutedColor = palette.getMutedColor(R.attr.colorPrimary);
-                                collapsingToolbarLayout.setContentScrimColor(mutedColor);
-                            }
-                        });
-                    } catch (IOException e) {
-                        Log.e(TAG, e.getMessage());
-                    }
-                }
-            });
-
-            if (isFavourite(movie))
+            if (MovieUtils.isFavourite(movie))
                 likeButton.setChecked(true);
 
+            generateImageColor(imageURL);
+            setUpLikeButton(movie);
+        }
+    }
 
-            final Movie finalMovie = movie;
-            likeButton.setOnCheckStateChangeListener(new ShineButton.OnCheckedChangeListener() {
-                @Override
-                public void onCheckedChanged(View view, final boolean checked) {
-                    AppExecutors.getInstance().diskIO().execute(new Runnable() {
+    private void setUpActionBar() {
+        supportPostponeEnterTransition();
+        setSupportActionBar(toolbar);
+        ActionBar actionBar = getSupportActionBar();
+
+        if (actionBar != null) {
+            actionBar.setDisplayHomeAsUpEnabled(true);
+            actionBar.setDisplayShowHomeEnabled(true);
+        }
+    }
+
+    private void generateImageColor(final String imageURL) {
+        AppExecutors.getInstance().diskIO().execute(new Runnable() {
+            @Override
+            public void run() {
+                try {
+                    URL url = new URL(imageURL);
+                    Bitmap bitmap = BitmapFactory.decodeStream(url.openConnection().getInputStream());
+                    Palette.from(bitmap).generate(new Palette.PaletteAsyncListener() {
                         @Override
-                        public void run() {
-                            try {
-                                final String updateMessage;
-                                if (checked) {
-                                    MovieDatabase.getInstance(context)
-                                            .movieDao()
-                                            .insertMovie(finalMovie);
-                                    updateMessage = "Added to favourites";
-                                } else {
-                                    MovieDatabase.getInstance(context)
-                                            .movieDao()
-                                            .deleteMovie(finalMovie);
-                                    updateMessage = "Removed from favourites";
-                                }
-
-                                runOnUiThread(new Runnable() {
-                                    @Override
-                                    public void run() {
-                                        Toast.makeText(context, updateMessage, Toast.LENGTH_SHORT).show();
-                                    }
-                                });
-                            } catch (SQLiteConstraintException e) {
-                                Log.e(TAG, e.getMessage());
-                            }
+                        public void onGenerated(@NonNull Palette palette) {
+                            int mutedColor = palette.getMutedColor(R.attr.colorPrimary);
+                            collapsingToolbarLayout.setContentScrimColor(mutedColor);
                         }
                     });
+                } catch (IOException e) {
+                    Log.e(TAG, e.getMessage());
                 }
-            });
-        }
+            }
+        });
     }
 
     private String getLanguage(String languageAbbr) {
@@ -216,17 +188,40 @@ public class DetailsActivity extends AppCompatActivity {
         return true;
     }
 
-    private boolean isFavourite(Movie movie) {
-        boolean isFav = false;
-        if (MainActivity.sFavouriteMovies != null) {
-            for (Movie favMovie : MainActivity.sFavouriteMovies) {
-                if (movie.getId().equals(favMovie.getId())) {
-                    isFav = true;
-                    break;
-                }
+    private void setUpLikeButton(final Movie finalMovie) {
+        likeButton.setOnCheckStateChangeListener(new ShineButton.OnCheckedChangeListener() {
+            @Override
+            public void onCheckedChanged(View view, final boolean checked) {
+                AppExecutors.getInstance().diskIO().execute(new Runnable() {
+                    @Override
+                    public void run() {
+                        try {
+                            final String updateMessage;
+                            if (checked) {
+                                MovieDatabase.getInstance(context)
+                                        .movieDao()
+                                        .insertMovie(finalMovie);
+                                updateMessage = "Added to favourites";
+                            } else {
+                                MovieDatabase.getInstance(context)
+                                        .movieDao()
+                                        .deleteMovie(finalMovie);
+                                updateMessage = "Removed from favourites";
+                            }
+
+                            runOnUiThread(new Runnable() {
+                                @Override
+                                public void run() {
+                                    Toast.makeText(context, updateMessage, Toast.LENGTH_SHORT).show();
+                                }
+                            });
+                        } catch (SQLiteConstraintException e) {
+                            Log.e(TAG, e.getMessage());
+                        }
+                    }
+                });
             }
-        }
-        return isFav;
+        });
     }
 
     private void fetchCredits(int movieId) {

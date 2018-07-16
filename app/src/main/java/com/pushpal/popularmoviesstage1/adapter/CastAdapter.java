@@ -1,15 +1,18 @@
 package com.pushpal.popularmoviesstage1.adapter;
 
 import android.content.Context;
+import android.content.Intent;
 import android.support.annotation.NonNull;
 import android.support.v7.widget.RecyclerView;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
 import android.widget.ImageView;
+import android.widget.LinearLayout;
 import android.widget.TextView;
 
 import com.pushpal.popularmoviesstage1.R;
+import com.pushpal.popularmoviesstage1.activity.CastActivity;
 import com.pushpal.popularmoviesstage1.model.MovieCast;
 import com.pushpal.popularmoviesstage1.utilities.Constants;
 import com.squareup.picasso.Picasso;
@@ -39,7 +42,7 @@ public class CastAdapter extends RecyclerView.Adapter<CastAdapter.CastViewHolder
 
     @Override
     public void onBindViewHolder(@NonNull CastViewHolder holder, int position) {
-        MovieCast movieCast = casts.get(position);
+        final MovieCast movieCast = casts.get(position);
         holder.castName.setText(movieCast.getActorName());
         holder.characterName.setText((movieCast.getCharacterName()));
         String imageURL = Constants.IMAGE_BASE_URL
@@ -49,6 +52,15 @@ public class CastAdapter extends RecyclerView.Adapter<CastAdapter.CastViewHolder
                 .load(imageURL)
                 .placeholder(R.drawable.person)
                 .into(holder.castImage);
+
+        holder.castLayout.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View view) {
+                Intent personIntent = new Intent(context, CastActivity.class);
+                personIntent.putExtra("PERSON_ID", movieCast.getId());
+                context.startActivity(personIntent);
+            }
+        });
     }
 
     @Override
@@ -66,6 +78,9 @@ public class CastAdapter extends RecyclerView.Adapter<CastAdapter.CastViewHolder
 
         @BindView(R.id.tv_character_name)
         TextView characterName;
+
+        @BindView(R.id.ll_cast)
+        LinearLayout castLayout;
 
         CastViewHolder(View itemView) {
             super(itemView);

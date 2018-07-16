@@ -37,17 +37,16 @@ import com.pushpal.popularmoviesstage1.adapter.MovieAdapter;
 import com.pushpal.popularmoviesstage1.adapter.MovieClickListener;
 import com.pushpal.popularmoviesstage1.database.MainViewModel;
 import com.pushpal.popularmoviesstage1.model.Movie;
-import com.pushpal.popularmoviesstage1.model.MovieLang;
 import com.pushpal.popularmoviesstage1.model.MovieResponse;
 import com.pushpal.popularmoviesstage1.networking.ConnectivityReceiver;
 import com.pushpal.popularmoviesstage1.networking.RESTClient;
 import com.pushpal.popularmoviesstage1.networking.RESTClientInterface;
 import com.pushpal.popularmoviesstage1.utilities.Constants;
 import com.pushpal.popularmoviesstage1.utilities.MovieApplication;
+import com.pushpal.popularmoviesstage1.utilities.MovieUtils;
 import com.victor.loading.newton.NewtonCradleLoading;
 
 import java.util.ArrayList;
-import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
@@ -112,13 +111,13 @@ public class MainActivity extends AppCompatActivity implements
 
         ButterKnife.bind(this);
 
-        setUpToolbar();
+        setUpActionBar();
         resetData();
         setupRecyclerView();
         implementPagination();
 
         startLoader();
-        fetchLanguages();
+        MovieUtils.fetchLanguages();
         retrieveFavMovies();
 
         // Fetching page 1, top rated
@@ -126,7 +125,7 @@ public class MainActivity extends AppCompatActivity implements
                 .getColor(R.color.colorAccent));
     }
 
-    private void setUpToolbar() {
+    private void setUpActionBar() {
         setSupportActionBar(toolbar);
         if (getSupportActionBar() != null)
             getSupportActionBar().setDisplayShowTitleEnabled(false);
@@ -484,38 +483,6 @@ public class MainActivity extends AppCompatActivity implements
         }
     }
 
-    private void fetchLanguages() {
-        RESTClientInterface restClientInterface = RESTClient.getClient().create(RESTClientInterface.class);
-        Call<List<MovieLang>> call;
-        final List<MovieLang> finalMovieLanguages = new ArrayList<>();
-
-        call = restClientInterface.getLanguages(Constants.API_KEY);
-
-        if (call != null) {
-            call.enqueue(new Callback<List<MovieLang>>() {
-                @Override
-                public void onResponse(@NonNull Call<List<MovieLang>> call, @NonNull Response<List<MovieLang>> response) {
-                    int statusCode = response.code();
-
-                    if (statusCode == 200) {
-                        if (response.body() != null) {
-                            finalMovieLanguages.addAll(response.body());
-                            sLanguageMap = new HashMap<>();
-                            for (MovieLang movieLang : finalMovieLanguages)
-                                sLanguageMap.put(movieLang.getAbbreviation(), movieLang.getEnglishName());
-                        }
-                    }
-                }
-
-                @Override
-                public void onFailure(@NonNull Call<List<MovieLang>> call, @NonNull Throwable throwable) {
-                    // Log error here since request failed
-                    Log.e(TAG, throwable.toString());
-                }
-            });
-        }
-    }
-
     @Override
     public boolean onCreateOptionsMenu(Menu menu) {
         MenuInflater inflater = getMenuInflater();
@@ -581,5 +548,11 @@ public class MainActivity extends AppCompatActivity implements
     private void setFavList(List<Movie> movies) {
         this.mMovieList.clear();
         this.mMovieList.addAll(movies);
+    }
+
+    @Override
+    protected void onDestroy() {
+        super.onDestroy();
+        Log.e(TAG, "onDestroy: .");
     }
 }

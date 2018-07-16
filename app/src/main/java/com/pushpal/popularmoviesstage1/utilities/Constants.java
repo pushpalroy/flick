@@ -16,6 +16,7 @@ public class Constants {
     public static final String CREDITS_URL = "movie/{movie_id}/credits";
     public static final String TRAILERS_URL = "movie/{movie_id}/videos";
     public static final String REVIEWS_URL = "movie/{movie_id}/reviews";
+    public static final String PERSON_URL = "person/{person_id}";
 
     public static final String DISCOVER_URL = BASE_URL + "discover/movie?api_key=" + API_KEY;
 
@@ -45,6 +46,9 @@ public class Constants {
 
     public static final String EXTRA_MOVIE_ITEM = "movie_image_url";
     public static final String EXTRA_MOVIE_IMAGE_TRANSITION_NAME = "movie_image_transition_name";
+
+    public static final String EXTRA_PERSON_ITEM = "person";
+
     public static final String SORT_TYPE = "sort_type";
     public static final String ADAPTER_POSITION = "adapter_position";
     public static final String ARRANGEMENT_TYPE = "arrangement_type";
